@@ -1,0 +1,49 @@
+{
+  "type": "function",
+  "function": {
+    "name": "addToWaitlist",
+    "description": "Adds a patient to the cancellation waitlist after collecting their details. Call this once you have confirmed the patient's name, phone number, and what service they need.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "patient_name": {
+          "type": "string",
+          "description": "Patient's full name as they stated it"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Patient's callback phone number including area code"
+        },
+        "preferred_days": {
+          "type": "string",
+          "description": "Days of the week the patient prefers, e.g. 'Monday, Wednesday' or 'any day'"
+        },
+        "preferred_times": {
+          "type": "string",
+          "description": "Time of day the patient prefers, e.g. 'mornings', 'after 3pm', 'any time'"
+        },
+        "service_needed": {
+          "type": "string",
+          "description": "The dental service they need, e.g. 'cleaning', 'new patient exam', 'emergency', 'crown consultation'"
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["routine", "urgent"],
+          "description": "Set to 'urgent' if patient described pain, swelling, bleeding, broken tooth, or any emergency. Otherwise 'routine'."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Any additional details the patient mentioned about their situation"
+        }
+      },
+      "required": ["patient_name", "phone", "service_needed", "priority"]
+    }
+  },
+  "server": {
+    "url": "https://YOUR_VERCEL_DOMAIN.vercel.app/api/waitlist",
+    "timeoutSeconds": 20,
+    "headers": {
+      "x-vapi-secret": "{{VAPI_WEBHOOK_SECRET}}"
+    }
+  }
+}

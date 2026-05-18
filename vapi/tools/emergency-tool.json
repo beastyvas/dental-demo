@@ -1,0 +1,32 @@
+{
+  "type": "function",
+  "function": {
+    "name": "sendEmergencyAlert",
+    "description": "Immediately notifies Dr. Hammond via SMS about an emergency patient. Use this during business hours when a patient describes an emergency and you need to alert the doctor RIGHT NOW — even if the patient is coming in directly and doesn't need to be added to the waitlist.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "patient_name": {
+          "type": "string",
+          "description": "Patient's full name"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Patient's callback phone number"
+        },
+        "emergency_description": {
+          "type": "string",
+          "description": "Brief description of the emergency as the patient described it — e.g. 'severe throbbing pain, can't sleep', 'knocked out tooth', 'swollen jaw'"
+        }
+      },
+      "required": ["patient_name", "phone", "emergency_description"]
+    }
+  },
+  "server": {
+    "url": "https://YOUR_VERCEL_DOMAIN.vercel.app/api/emergency",
+    "timeoutSeconds": 15,
+    "headers": {
+      "x-vapi-secret": "{{VAPI_WEBHOOK_SECRET}}"
+    }
+  }
+}
