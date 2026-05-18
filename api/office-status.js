@@ -6,11 +6,15 @@
  */
 
 import { getOfficeStatus } from '../lib/businessHours.js';
+import { verifyVapiRequest } from '../lib/vapi.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  // Only verify on POST (Vapi tool calls) — allow unauthenticated GET for quick health checks
+  if (req.method === 'POST' && !verifyVapiRequest(req, res)) return;
 
   try {
     const status = getOfficeStatus();

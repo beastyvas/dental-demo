@@ -22,17 +22,14 @@
 import { supabase } from '../lib/supabase.js';
 import { formatLasVegas } from '../lib/timezone.js';
 import { sendSMS } from '../lib/twilio.js';
+import { verifyVapiRequest } from '../lib/vapi.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Verify shared secret so random callers can't pollute the table
-  const secret = req.headers['x-vapi-secret'];
-  if (secret !== process.env.VAPI_WEBHOOK_SECRET) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
+  if (!verifyVapiRequest(req, res)) return;
 
   try {
     const body = req.body;

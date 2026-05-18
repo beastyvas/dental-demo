@@ -9,11 +9,32 @@ Run every test in order. Check each box before moving on.
 
 - [ ] Supabase: ran `sql/001_create_waitlist.sql` — table exists in Table Editor
 - [ ] Vercel: all env vars set (compare against `.env.example`)
-- [ ] Vapi: 3 tools added — `checkOfficeHours`, `addToWaitlist`, `sendEmergencyAlert`
-- [ ] Vapi: `rachel-system-prompt.md` pasted into System Prompt (everything after `===START===`)
-- [ ] Vapi: `YOUR_VERCEL_DOMAIN` replaced in all 3 tool JSON files
-- [ ] Vapi: `VAPI_WEBHOOK_SECRET` matches in Vercel env + tool headers
+      Must include: VAPI_AGENT_ID, VAPI_API_KEY, VAPI_WEBHOOK_SECRET, VERCEL_DOMAIN
 - [ ] Twilio: `DOCTOR_EMERGENCY_PHONE` and `FRONT_DESK_PHONE` are real numbers you can receive texts on
+
+## Pre-flight: Vapi Setup (run the setup script — no copy-paste needed)
+
+The setup script automatically pushes Rachel's system prompt and all 3 tools
+to agent `54da6a88-1e1e-4977-a216-1670b689a253` via the Vapi API.
+
+1. Create `.env.local` from `.env.example` and fill in all values
+2. Run:
+   ```bash
+   node scripts/vapi-setup.js
+   ```
+3. Expected output:
+   ```
+   ✅  Done!
+      System prompt length : ~4200 chars
+      Tools pushed         : 3
+        • checkOfficeHours  → https://your-domain.vercel.app/api/office-status
+        • addToWaitlist     → https://your-domain.vercel.app/api/waitlist
+        • sendEmergencyAlert → https://your-domain.vercel.app/api/emergency
+   ```
+4. If you update the system prompt or tools later, just re-run the script.
+
+- [ ] Setup script ran successfully with no errors
+- [ ] In Vapi dashboard → your assistant → Model tab: confirm 3 tools are listed
 
 ---
 
