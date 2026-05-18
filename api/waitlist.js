@@ -21,7 +21,7 @@
 
 import { supabase } from '../lib/supabase.js';
 import { formatLasVegas } from '../lib/timezone.js';
-import { sendSMS } from '../lib/twilio.js';
+import { sendSMS } from '../lib/sms.js';
 import { verifyVapiRequest } from '../lib/vapi.js';
 
 export default async function handler(req, res) {

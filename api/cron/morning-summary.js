@@ -12,7 +12,7 @@
  */
 
 import { supabase } from '../../lib/supabase.js';
-import { sendSMS } from '../../lib/twilio.js';
+import { sendSMS } from '../../lib/sms.js';
 import { formatLasVegas } from '../../lib/timezone.js';
 
 export default async function handler(req, res) {

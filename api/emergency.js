@@ -6,7 +6,7 @@
  * when the patient will be directed to come in directly).
  */
 
-import { sendSMS } from '../lib/twilio.js';
+import { sendSMS } from '../lib/sms.js';
 import { formatLasVegas } from '../lib/timezone.js';
 import { verifyVapiRequest } from '../lib/vapi.js';
 
