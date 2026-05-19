@@ -14,7 +14,7 @@ Run every test in order. Check each box before moving on.
 
 ## Pre-flight: Vapi Setup (run the setup script — no copy-paste needed)
 
-The setup script automatically pushes Rachel's system prompt and all 3 tools
+The setup script automatically pushes Jessica's system prompt and all 3 tools
 to agent `54da6a88-1e1e-4977-a216-1670b689a253` via the Vapi API.
 
 1. Create `.env.local` from `.env.example` and fill in all values
@@ -45,11 +45,11 @@ to agent `54da6a88-1e1e-4977-a216-1670b689a253` via the Vapi API.
 > "Hi, I'd like to schedule a teeth cleaning."
 
 Expected behavior:
-- [ ] Rachel says she's booked ~4 weeks out
-- [ ] Rachel offers to add you to the cancellation list
-- [ ] Rachel collects: name, phone, service, preferred days, preferred times
-- [ ] Rachel confirms details back to you before saving
-- [ ] Rachel says "You're all set"
+- [ ] Jessica says she's booked ~4 weeks out
+- [ ] Jessica offers to add you to the cancellation list
+- [ ] Jessica collects: name, phone, service, preferred days, preferred times
+- [ ] Jessica confirms details back to you before saving
+- [ ] Jessica says "You're all set"
 - [ ] Supabase → Table Editor → `waitlist` → new row appears
 - [ ] Row has `priority = routine`, `contacted = false`
 
@@ -58,7 +58,7 @@ Expected behavior:
 > "I'd like a cleaning." → when offered waitlist → "No thanks."
 
 Expected behavior:
-- [ ] Rachel thanks them and doesn't push further
+- [ ] Jessica thanks them and doesn't push further
 - [ ] No row created in Supabase
 
 ---
@@ -70,9 +70,9 @@ Expected behavior:
 > "I'm in severe pain — my tooth has been throbbing all night and I can't sleep."
 
 Expected behavior:
-- [ ] Rachel immediately shifts to urgent/empathetic tone
-- [ ] Rachel does NOT proceed as if it's a routine call
-- [ ] Rachel collects: name, phone, description of emergency
+- [ ] Jessica immediately shifts to urgent/empathetic tone
+- [ ] Jessica does NOT proceed as if it's a routine call
+- [ ] Jessica collects: name, phone, description of emergency
 - [ ] Supabase → new row with `priority = urgent`
 - [ ] `DOCTOR_EMERGENCY_PHONE` receives an SMS within ~10 seconds
 
@@ -90,7 +90,7 @@ Call them back ASAP.
 - [ ] Year shows 2026
 
 ### Test D: Additional emergency keywords
-Run quick tests for each keyword group — Rachel should shift tone immediately:
+Run quick tests for each keyword group — Jessica should shift tone immediately:
 - [ ] "broken tooth"
 - [ ] "swollen jaw"
 - [ ] "knocked out tooth"
@@ -134,7 +134,7 @@ Expected behavior:
 > "Hi, I need an appointment."
 
 Expected behavior:
-- [ ] Rachel uses business-hours greeting: "Thank you for calling Hammond Dental, this is Rachel speaking..."
+- [ ] Jessica uses business-hours greeting: "Thank you for calling Hammond Dental, this is Jessica speaking..."
 - [ ] Tone is "we're with patients" / normal reception mode
 
 ### Test H: Call after hours (evenings/weekends)
@@ -143,15 +143,15 @@ To test without waiting for real after-hours:
 - Or call on a weekend
 
 Expected behavior:
-- [ ] Rachel uses after-hours greeting: "Our office is currently closed..."
-- [ ] Rachel mentions she can still help schedule or handle emergencies
+- [ ] Jessica uses after-hours greeting: "Our office is currently closed..."
+- [ ] Jessica mentions she can still help schedule or handle emergencies
 - [ ] Waitlist flow still works (entries still save to Supabase)
 
 ### Test I: Holiday detection
 Add a test date to `lib/businessHours.js` (e.g., temporarily add today's date to the holidays array):
 
 Expected behavior:
-- [ ] Rachel uses the holiday message
+- [ ] Jessica uses the holiday message
 - [ ] Offers to take info for next business day callback
 
 ### Test J: Date/year sanity check
@@ -159,7 +159,7 @@ Expected behavior:
 > "What year is it?" or "When's the next available appointment?"
 
 Expected behavior:
-- [ ] Rachel references 2026, never 2024 or 2025
+- [ ] Jessica references 2026, never 2024 or 2025
 - [ ] Any time references are in Las Vegas time, not UTC
 
 ---
@@ -211,7 +211,7 @@ Run this as a final smoke test before client demo:
 2. Say: "Hi, I have a broken tooth and it's really painful"
 3. Give name: "Test Patient", phone: your real number
 4. Verify:
-   - [ ] Rachel responds with urgency/empathy
+   - [ ] Jessica responds with urgency/empathy
    - [ ] Supabase has new row: `priority = urgent`
    - [ ] Doctor emergency SMS received within 10 seconds
    - [ ] Dashboard shows the entry with red URGENT badge

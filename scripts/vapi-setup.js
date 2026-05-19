@@ -2,7 +2,7 @@
 /**
  * scripts/vapi-setup.js
  * ---------------------
- * One-time (and re-runnable) script that pushes Rachel's full config
+ * One-time (and re-runnable) script that pushes Jessica's full config
  * to the Vapi agent via the REST API. Run this whenever you update
  * the system prompt or tools instead of copy-pasting into the dashboard.
  *
@@ -115,7 +115,7 @@ async function run() {
   console.log(`   Tools pushed         : ${result.model?.tools?.length ?? '?'}`);
   tools.forEach(t => console.log(`     • ${t.function.name} → ${t.server?.url}`));
   console.log('');
-  console.log('Next: call your Vapi number to verify Rachel greets correctly.');
+  console.log('Next: call your Vapi number to verify Jessica greets correctly.');
 }
 
 run().catch(err => {

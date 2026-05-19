@@ -21,7 +21,6 @@
 
 import { supabase } from '../lib/supabase.js';
 import { formatLasVegas } from '../lib/timezone.js';
-import { sendSMS } from '../lib/sms.js';
 import { verifyVapiRequest } from '../lib/vapi.js';
 
 export default async function handler(req, res) {
@@ -82,22 +81,8 @@ export default async function handler(req, res) {
 
     console.log(`[${formatLasVegas()}] Waitlist entry created: ${data.id} — ${patient_name} (${priority})`);
 
-    // Feature 2: fire doctor SMS immediately for urgent/emergency entries
-    if (priority === 'urgent') {
-      const doctorPhone = process.env.DOCTOR_EMERGENCY_PHONE;
-      if (doctorPhone) {
-        const alertBody =
-          `🚨 URGENT — Emergency patient call:\n` +
-          `Patient: ${patient_name}\n` +
-          `Phone: ${phone}\n` +
-          `Issue: ${service_needed}${notes ? ' — ' + notes : ''}\n` +
-          `Called at: ${formatLasVegas()}\n` +
-          `Call them back ASAP.`;
-        await sendSMS(doctorPhone, alertBody).catch(err =>
-          console.error('Failed to send doctor SMS:', err)
-        );
-      }
-    }
+    // Doctor SMS for urgent cases is handled exclusively by /api/emergency
+    // to prevent duplicate texts when Vapi calls both tools in one turn.
 
     // Vapi expects this shape when a tool call succeeds
     return res.status(200).json({
