@@ -47,7 +47,7 @@ export default async function handler(req, res) {
     if (!entries || entries.length === 0) {
       const msg =
         `Good morning! No overnight waitlist entries to report.\n\n` +
-        `Have a great day! — AI Receptionist`;
+        `Have a great day! — Virtual Receptionist`;
       await sendSMS(frontDesk, msg);
       return res.status(200).json({ sent: true, entryCount: 0 });
     }
@@ -85,7 +85,7 @@ export default async function handler(req, res) {
 
     msg += `Total overnight inquiries handled: ${entries.length}\n`;
     msg += `Calls that would have gone to voicemail: ${entries.length}\n\n`;
-    msg += `Have a great day! — AI Receptionist`;
+    msg += `Have a great day! — Virtual Receptionist`;
 
     await sendSMS(frontDesk, msg);
 

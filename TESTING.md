@@ -1,4 +1,4 @@
-# Testing Checklist — Hammond Dental AI Receptionist
+# Testing Checklist — Hammond Dental Virtual Receptionist
 
 Use this script before pitching to a real client.
 Run every test in order. Check each box before moving on.
@@ -118,7 +118,7 @@ Expected behavior:
 - [ ] Shows count of routine waitlist additions
 - [ ] Shows count of emergencies (if any) with "Already alerted at [time]"
 - [ ] Times shown in Las Vegas local time
-- [ ] Ends with "Have a great day! — AI Receptionist"
+- [ ] Ends with "Have a great day! — Virtual Receptionist"
 
 ### Test F: Scheduled cron (production)
 - [ ] In Vercel dashboard → Cron Jobs, confirm job appears: `0 15 * * 1-6`
