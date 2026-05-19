@@ -5,11 +5,9 @@ import { useState, useEffect, useCallback } from 'react';
 const TOKEN_KEY = 'hd_dash_token';
 
 const FILTERS = [
-  { key: 'all',           label: 'All',           cls: '' },
-  { key: 'urgent',        label: '🚨 Urgent',      cls: 'active-urgent' },
-  { key: 'routine',       label: 'Routine',        cls: '' },
-  { key: 'not_contacted', label: 'Not Contacted',  cls: '' },
-  { key: 'contacted',     label: 'Contacted',      cls: '' },
+  { key: 'all',     label: 'All Active'  },
+  { key: 'urgent',  label: '🚨 Urgent'   },
+  { key: 'routine', label: 'Routine'     },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -27,7 +25,7 @@ function fmtDate(iso) {
 }
 
 function exportCSV(entries) {
-  const cols = ['patient_name','phone','service_needed','preferred_days','preferred_times','priority','contacted','created_at','notes'];
+  const cols = ['patient_name','phone','service_needed','preferred_days','preferred_times','priority','created_at','notes'];
   const header = cols.join(',');
   const rows = entries.map(e =>
     cols.map(c => JSON.stringify(e[c] ?? '')).join(',')
@@ -37,7 +35,7 @@ function exportCSV(entries) {
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = `hammond-dental-waitlist-${new Date().toISOString().slice(0,10)}.csv`;
+  a.download = `hammond-dental-leads-${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -100,16 +98,16 @@ function StatsBar({ stats }) {
   return (
     <div className="stats-row">
       <div className="stat-card accent">
-        <div className="label">This Month</div>
+        <div className="label">Leads This Month</div>
         <div className="value">{stats.totalThisMonth}</div>
       </div>
       <div className="stat-card urgent">
-        <div className="label">Urgent Pending</div>
+        <div className="label">Urgent Active</div>
         <div className="value">{stats.urgentPending}</div>
       </div>
       <div className="stat-card success">
-        <div className="label">Total Shown</div>
-        <div className="value">{stats.totalShown}</div>
+        <div className="label">Scheduled This Month</div>
+        <div className="value">{stats.scheduledMonth}</div>
       </div>
     </div>
   );
@@ -117,13 +115,13 @@ function StatsBar({ stats }) {
 
 // ─── Waitlist Table ──────────────────────────────────────────────────────────
 
-function WaitlistTable({ entries, onToggleContacted, updating }) {
+function WaitlistTable({ entries, onScheduled, onDelete, updating }) {
   if (entries.length === 0) {
     return (
       <div className="table-wrap">
         <div className="empty-state">
           <div className="icon">📋</div>
-          <p>No entries match this filter.</p>
+          <p>No active leads. All caught up!</p>
         </div>
       </div>
     );
@@ -140,15 +138,15 @@ function WaitlistTable({ entries, onToggleContacted, updating }) {
             <th>Preference</th>
             <th>Added</th>
             <th>Priority</th>
-            <th>Action</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {entries.map(e => (
-            <tr key={e.id} className={e.contacted ? 'is-contacted' : ''}>
+            <tr key={e.id} className={e.priority === 'urgent' ? 'row-urgent' : ''}>
               <td className="td-name">{e.patient_name}</td>
               <td className="td-phone">
-                <a href={`tel:${e.phone}`}>{e.phone}</a>
+                <a href={`tel:${e.phone}`} className="btn-call">📞 Call</a>
               </td>
               <td className="td-service">{e.service_needed}</td>
               <td className="td-pref">
@@ -158,24 +156,23 @@ function WaitlistTable({ entries, onToggleContacted, updating }) {
               <td>
                 <span className={`badge badge-${e.priority}`}>{e.priority}</span>
               </td>
-              <td>
-                {e.contacted ? (
-                  <button
-                    className="btn-contact btn-contact-undo"
-                    disabled={updating.has(e.id)}
-                    onClick={() => onToggleContacted(e.id, false)}
-                  >
-                    Undo
-                  </button>
-                ) : (
-                  <button
-                    className="btn-contact btn-contact-mark"
-                    disabled={updating.has(e.id)}
-                    onClick={() => onToggleContacted(e.id, true)}
-                  >
-                    {updating.has(e.id) ? '…' : '✓ Contacted'}
-                  </button>
-                )}
+              <td className="td-actions">
+                <button
+                  className="btn-scheduled"
+                  disabled={updating.has(e.id)}
+                  onClick={() => onScheduled(e.id)}
+                  title="Mark as scheduled — removes from this list"
+                >
+                  {updating.has(e.id) ? '…' : '✓ Scheduled'}
+                </button>
+                <button
+                  className="btn-delete"
+                  disabled={updating.has(e.id)}
+                  onClick={() => onDelete(e.id)}
+                  title="Delete lead permanently"
+                >
+                  🗑
+                </button>
               </td>
             </tr>
           ))}
@@ -189,7 +186,7 @@ function WaitlistTable({ entries, onToggleContacted, updating }) {
 
 function Dashboard({ token, onLogout }) {
   const [entries,  setEntries]  = useState([]);
-  const [stats,    setStats]    = useState({ totalThisMonth: 0, urgentPending: 0, totalShown: 0 });
+  const [stats,    setStats]    = useState({ totalThisMonth: 0, urgentPending: 0, scheduledMonth: 0 });
   const [filter,   setFilter]   = useState('all');
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState('');
@@ -216,38 +213,54 @@ function Dashboard({ token, onLogout }) {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  async function handleToggleContacted(id, contacted) {
-    setUpdating(prev => new Set([...prev, id]));
+  function lockId(id)   { setUpdating(prev => new Set([...prev, id])); }
+  function unlockId(id) { setUpdating(prev => { const s = new Set(prev); s.delete(id); return s; }); }
+
+  async function handleScheduled(id) {
+    lockId(id);
     try {
       const r = await fetch('/api/dashboard/waitlist', {
         method: 'PATCH',
         headers: authHeaders,
-        body: JSON.stringify({ ids: [id], contacted }),
+        body: JSON.stringify({ ids: [id] }),
       });
       if (!r.ok) throw new Error('Update failed');
-      setEntries(prev =>
-        prev.map(e => e.id === id ? { ...e, contacted } : e)
-      );
-      // Refresh stats
+      // Remove from active list immediately
+      setEntries(prev => prev.filter(e => e.id !== id));
       setStats(prev => ({
         ...prev,
-        urgentPending: entries
-          .map(e => e.id === id ? { ...e, contacted } : e)
-          .filter(e => e.priority === 'urgent' && !e.contacted).length,
+        urgentPending:  entries.filter(e => e.id !== id && e.priority === 'urgent').length,
+        scheduledMonth: prev.scheduledMonth + 1,
       }));
     } catch (e) {
       setError(e.message);
     } finally {
-      setUpdating(prev => { const s = new Set(prev); s.delete(id); return s; });
+      unlockId(id);
     }
   }
 
-  // Apply client-side filter
+  async function handleDelete(id) {
+    if (!window.confirm('Delete this lead permanently?')) return;
+    lockId(id);
+    try {
+      const r = await fetch('/api/dashboard/waitlist', {
+        method: 'DELETE',
+        headers: authHeaders,
+        body: JSON.stringify({ ids: [id] }),
+      });
+      if (!r.ok) throw new Error('Delete failed');
+      setEntries(prev => prev.filter(e => e.id !== id));
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      unlockId(id);
+    }
+  }
+
+  // Client-side priority filter (data is already active-only from API)
   const filtered = entries.filter(e => {
-    if (filter === 'urgent')        return e.priority === 'urgent';
-    if (filter === 'routine')       return e.priority === 'routine';
-    if (filter === 'not_contacted') return !e.contacted;
-    if (filter === 'contacted')     return e.contacted;
+    if (filter === 'urgent')  return e.priority === 'urgent';
+    if (filter === 'routine') return e.priority === 'routine';
     return true;
   });
 
@@ -265,14 +278,14 @@ function Dashboard({ token, onLogout }) {
       <main className="main">
         {error && <div className="error-banner">⚠️ {error}</div>}
 
-        <StatsBar stats={{ ...stats, totalShown: filtered.length }} />
+        <StatsBar stats={stats} />
 
         <div className="toolbar">
           <div className="filter-group">
             {FILTERS.map(f => (
               <button
                 key={f.key}
-                className={`btn-filter ${filter === f.key ? (f.cls || 'active') : ''}`}
+                className={`btn-filter ${filter === f.key ? 'active' : ''}`}
                 onClick={() => setFilter(f.key)}
               >
                 {f.label}
@@ -294,12 +307,13 @@ function Dashboard({ token, onLogout }) {
         {loading ? (
           <div className="page-center">
             <div className="spinner" />
-            Loading waitlist…
+            Loading leads…
           </div>
         ) : (
           <WaitlistTable
             entries={filtered}
-            onToggleContacted={handleToggleContacted}
+            onScheduled={handleScheduled}
+            onDelete={handleDelete}
             updating={updating}
           />
         )}
