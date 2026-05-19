@@ -113,9 +113,92 @@ function StatsBar({ stats }) {
   );
 }
 
+// ─── Patient Detail Drawer ───────────────────────────────────────────────────
+
+function DetailDrawer({ entry, onClose, onScheduled, onDelete, updating }) {
+  if (!entry) return null;
+  const busy = updating.has(entry.id);
+
+  return (
+    <>
+      <div className="drawer-overlay" onClick={onClose} />
+      <div className="drawer">
+        <div className="drawer-header">
+          <div className="drawer-title">
+            <span>{entry.patient_name}</span>
+            <span className={`badge badge-${entry.priority}`}>{entry.priority}</span>
+          </div>
+          <button className="drawer-close" onClick={onClose}>✕</button>
+        </div>
+
+        <div className="drawer-body">
+          <div className="detail-section">
+            <div className="detail-label">Phone</div>
+            <a href={`tel:${entry.phone}`} className="btn-call drawer-call">📞 {entry.phone}</a>
+          </div>
+
+          <div className="detail-section">
+            <div className="detail-label">Service Needed</div>
+            <div className="detail-value">{entry.service_needed || '—'}</div>
+          </div>
+
+          <div className="detail-row">
+            <div className="detail-section">
+              <div className="detail-label">Preferred Days</div>
+              <div className="detail-value">{entry.preferred_days || '—'}</div>
+            </div>
+            <div className="detail-section">
+              <div className="detail-label">Preferred Times</div>
+              <div className="detail-value">{entry.preferred_times || '—'}</div>
+            </div>
+          </div>
+
+          {entry.notes && (
+            <div className="detail-section">
+              <div className="detail-label">Patient Notes</div>
+              <div className="detail-value detail-notes">{entry.notes}</div>
+            </div>
+          )}
+
+          <div className="detail-section">
+            <div className="detail-label">Called In</div>
+            <div className="detail-value detail-muted">{fmtDate(entry.created_at)}</div>
+          </div>
+        </div>
+
+        <div className="drawer-footer">
+          <button
+            className="btn-scheduled drawer-btn"
+            disabled={busy}
+            onClick={() => { onScheduled(entry.id); onClose(); }}
+          >
+            {busy ? '…' : '✓ Mark as Scheduled'}
+          </button>
+          <button
+            className="btn-delete drawer-btn-delete"
+            disabled={busy}
+            onClick={() => { onDelete(entry.id); onClose(); }}
+          >
+            🗑 Delete
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
 // ─── Waitlist Table ──────────────────────────────────────────────────────────
 
 function WaitlistTable({ entries, onScheduled, onDelete, updating }) {
+  const [selected, setSelected] = useState(null);
+
+  // Keep drawer in sync if entry gets removed
+  useEffect(() => {
+    if (selected && !entries.find(e => e.id === selected.id)) {
+      setSelected(null);
+    }
+  }, [entries, selected]);
+
   if (entries.length === 0) {
     return (
       <div className="table-wrap">
@@ -128,57 +211,71 @@ function WaitlistTable({ entries, onScheduled, onDelete, updating }) {
   }
 
   return (
-    <div className="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Patient</th>
-            <th>Phone</th>
-            <th>Service</th>
-            <th>Preference</th>
-            <th>Added</th>
-            <th>Priority</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {entries.map(e => (
-            <tr key={e.id} className={e.priority === 'urgent' ? 'row-urgent' : ''}>
-              <td className="td-name">{e.patient_name}</td>
-              <td className="td-phone">
-                <a href={`tel:${e.phone}`} className="btn-call">📞 Call</a>
-              </td>
-              <td className="td-service">{e.service_needed}</td>
-              <td className="td-pref">
-                {[e.preferred_days, e.preferred_times].filter(Boolean).join(' / ') || '—'}
-              </td>
-              <td className="td-date">{fmtDate(e.created_at)}</td>
-              <td>
-                <span className={`badge badge-${e.priority}`}>{e.priority}</span>
-              </td>
-              <td className="td-actions">
-                <button
-                  className="btn-scheduled"
-                  disabled={updating.has(e.id)}
-                  onClick={() => onScheduled(e.id)}
-                  title="Mark as scheduled — removes from this list"
-                >
-                  {updating.has(e.id) ? '…' : '✓ Scheduled'}
-                </button>
-                <button
-                  className="btn-delete"
-                  disabled={updating.has(e.id)}
-                  onClick={() => onDelete(e.id)}
-                  title="Delete lead permanently"
-                >
-                  🗑
-                </button>
-              </td>
+    <>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Patient</th>
+              <th>Phone</th>
+              <th>Service</th>
+              <th>Preference</th>
+              <th>Added</th>
+              <th>Priority</th>
+              <th>Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {entries.map(e => (
+              <tr
+                key={e.id}
+                className={`row-clickable ${e.priority === 'urgent' ? 'row-urgent' : ''} ${selected?.id === e.id ? 'row-selected' : ''}`}
+                onClick={() => setSelected(e)}
+              >
+                <td className="td-name">{e.patient_name}</td>
+                <td className="td-phone" onClick={ev => ev.stopPropagation()}>
+                  <a href={`tel:${e.phone}`} className="btn-call">📞 Call</a>
+                </td>
+                <td className="td-service">{e.service_needed}</td>
+                <td className="td-pref">
+                  {[e.preferred_days, e.preferred_times].filter(Boolean).join(' / ') || '—'}
+                </td>
+                <td className="td-date">{fmtDate(e.created_at)}</td>
+                <td>
+                  <span className={`badge badge-${e.priority}`}>{e.priority}</span>
+                </td>
+                <td className="td-actions" onClick={ev => ev.stopPropagation()}>
+                  <button
+                    className="btn-scheduled"
+                    disabled={updating.has(e.id)}
+                    onClick={() => onScheduled(e.id)}
+                    title="Mark as scheduled"
+                  >
+                    {updating.has(e.id) ? '…' : '✓ Scheduled'}
+                  </button>
+                  <button
+                    className="btn-delete"
+                    disabled={updating.has(e.id)}
+                    onClick={() => onDelete(e.id)}
+                    title="Delete lead permanently"
+                  >
+                    🗑
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <DetailDrawer
+        entry={selected}
+        onClose={() => setSelected(null)}
+        onScheduled={onScheduled}
+        onDelete={onDelete}
+        updating={updating}
+      />
+    </>
   );
 }
 
