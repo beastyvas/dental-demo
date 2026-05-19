@@ -31,7 +31,7 @@ async function handleGet(req, res) {
   let query = supabase
     .from('waitlist')
     .select('*')
-    .order('priority', { ascending: true })   // urgent first
+    .order('priority', { ascending: false })  // urgent first (desc: u > r)
     .order('created_at', { ascending: false });
 
   // Default: only show active (unscheduled) leads
