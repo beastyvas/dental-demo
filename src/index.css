@@ -183,7 +183,8 @@ tbody tr:hover { background: var(--surface-2); }
 tbody tr.row-urgent { background: rgba(248,81,73,0.04); }
 td { padding: 12px 16px; vertical-align: middle; }
 
-.td-name { font-weight: 500; }
+.td-name   { font-weight: 500; }
+.td-office { color: var(--text-muted); font-size: 12px; white-space: nowrap; }
 .td-phone { white-space: nowrap; }
 .td-service { color: var(--text); }
 .td-pref { color: var(--text-muted); font-size: 12px; }
@@ -247,6 +248,42 @@ td { padding: 12px 16px; vertical-align: middle; }
 /* ── Clickable rows ── */
 .row-clickable { cursor: pointer; }
 .row-selected { background: var(--accent-dim) !important; }
+
+/* ── Admin badge (topbar) ── */
+.badge-admin {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+/* ── Tab bar (admin only) ── */
+.tab-bar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  padding: 0 24px;
+  gap: 4px;
+}
+.tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 12px 16px;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
 /* ── Detail Drawer ── */
 .drawer-overlay {

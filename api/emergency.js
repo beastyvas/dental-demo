@@ -1,14 +1,13 @@
 /**
  * POST /api/emergency
- * Vapi calls this as the `sendEmergencyAlert` tool when an emergency
- * is detected and an immediate doctor notification is needed without
- * going through the full waitlist flow (e.g., during business hours
- * when the patient will be directed to come in directly).
+ * Called by Vapi as the `sendEmergencyAlert` tool.
+ * Multi-tenant: resolves doctor_phone from the client row instead of env var.
  */
 
-import { sendSMS } from '../lib/sms.js';
-import { formatLasVegas } from '../lib/timezone.js';
+import { sendSMS }           from '../lib/sms.js';
+import { formatInTZ, TIMEZONE } from '../lib/timezone.js';
 import { verifyVapiRequest } from '../lib/vapi.js';
+import { getClientByAgentId } from '../lib/clients.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -20,6 +19,13 @@ export default async function handler(req, res) {
   try {
     const body = req.body;
 
+    // Identify client
+    const assistantId = body?.message?.call?.assistantId;
+    const client      = await getClientByAgentId(assistantId);
+    if (!client) {
+      console.warn(`[emergency] Unknown assistantId: ${assistantId}`);
+    }
+
     let args;
     if (body?.message?.toolCalls?.[0]?.function?.arguments) {
       args = body.message.toolCalls[0].function.arguments;
@@ -27,11 +33,7 @@ export default async function handler(req, res) {
       args = body;
     }
 
-    const {
-      patient_name,
-      phone,
-      emergency_description,
-    } = args;
+    const { patient_name, phone, emergency_description } = args;
 
     if (!patient_name || !phone || !emergency_description) {
       return res.status(400).json({
@@ -39,9 +41,9 @@ export default async function handler(req, res) {
       });
     }
 
-    const doctorPhone = process.env.DOCTOR_EMERGENCY_PHONE;
+    const doctorPhone = client?.doctor_phone ?? process.env.DOCTOR_EMERGENCY_PHONE;
     if (!doctorPhone) {
-      console.warn('DOCTOR_EMERGENCY_PHONE not set — skipping SMS');
+      console.warn('[emergency] No doctor_phone configured — skipping SMS');
       return res.status(200).json({
         results: [{
           toolCallId: body?.message?.toolCalls?.[0]?.id ?? 'direct-call',
@@ -50,21 +52,22 @@ export default async function handler(req, res) {
       });
     }
 
+    const tz = client?.timezone ?? TIMEZONE;
     const alertBody =
       `🚨 URGENT — Emergency patient call:\n` +
       `Patient: ${patient_name}\n` +
       `Phone: ${phone}\n` +
       `Issue: ${emergency_description}\n` +
-      `Called at: ${formatLasVegas()}\n` +
+      `Called at: ${formatInTZ(new Date(), {}, tz)}\n` +
       `Call them back ASAP.`;
 
     await sendSMS(doctorPhone, alertBody);
-    console.log(`[${formatLasVegas()}] Emergency alert sent for ${patient_name}`);
+    console.log(`[${formatInTZ(new Date(), {}, tz)}] Emergency alert sent for ${patient_name} (${client?.slug ?? 'unknown'})`);
 
     return res.status(200).json({
       results: [{
         toolCallId: body?.message?.toolCalls?.[0]?.id ?? 'direct-call',
-        result: `Dr. Hammond has been alerted about ${patient_name}'s emergency and will call them back as soon as possible.`,
+        result: `Dr. ${client ? client.business_name.split(' ').pop() : 'Hammond'} has been alerted about ${patient_name}'s emergency and will call them back as soon as possible.`,
       }],
     });
   } catch (err) {

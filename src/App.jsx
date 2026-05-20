@@ -3,11 +3,12 @@ import { useState, useEffect, useCallback } from 'react';
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const TOKEN_KEY = 'hd_dash_token';
+const USER_KEY  = 'hd_dash_user';  // JSON: { role, business_name }
 
 const FILTERS = [
-  { key: 'all',     label: 'All Active'  },
-  { key: 'urgent',  label: '🚨 Urgent'   },
-  { key: 'routine', label: 'Routine'     },
+  { key: 'all',     label: 'All Active' },
+  { key: 'urgent',  label: '🚨 Urgent'  },
+  { key: 'routine', label: 'Routine'    },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -25,17 +26,17 @@ function fmtDate(iso) {
 }
 
 function exportCSV(entries) {
-  const cols = ['patient_name','phone','service_needed','preferred_days','preferred_times','priority','created_at','notes'];
+  const cols = ['patient_name','phone','service_needed','preferred_days','preferred_times','priority','created_at','notes','business_name'];
   const header = cols.join(',');
   const rows = entries.map(e =>
     cols.map(c => JSON.stringify(e[c] ?? '')).join(',')
   );
-  const csv = [header, ...rows].join('\n');
+  const csv  = [header, ...rows].join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = `hammond-dental-leads-${new Date().toISOString().slice(0,10)}.csv`;
+  a.download = `leads-${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -43,8 +44,8 @@ function exportCSV(entries) {
 // ─── Login ───────────────────────────────────────────────────────────────────
 
 function Login({ onLogin }) {
-  const [pw,  setPw]  = useState('');
-  const [err, setErr] = useState('');
+  const [pw,      setPw]      = useState('');
+  const [err,     setErr]     = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e) {
@@ -60,7 +61,8 @@ function Login({ onLogin }) {
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'Login failed');
       sessionStorage.setItem(TOKEN_KEY, data.token);
-      onLogin(data.token);
+      sessionStorage.setItem(USER_KEY, JSON.stringify({ role: data.role, business_name: data.business_name }));
+      onLogin(data.token, { role: data.role, business_name: data.business_name });
     } catch (e) {
       setErr(e.message);
     } finally {
@@ -132,6 +134,13 @@ function DetailDrawer({ entry, onClose, onScheduled, onDelete, updating }) {
         </div>
 
         <div className="drawer-body">
+          {entry.business_name && (
+            <div className="detail-section">
+              <div className="detail-label">Office</div>
+              <div className="detail-value">{entry.business_name}</div>
+            </div>
+          )}
+
           <div className="detail-section">
             <div className="detail-label">Phone</div>
             <a href={`tel:${entry.phone}`} className="btn-call drawer-call">📞 {entry.phone}</a>
@@ -189,10 +198,9 @@ function DetailDrawer({ entry, onClose, onScheduled, onDelete, updating }) {
 
 // ─── Waitlist Table ──────────────────────────────────────────────────────────
 
-function WaitlistTable({ entries, onScheduled, onDelete, updating }) {
+function WaitlistTable({ entries, onScheduled, onDelete, updating, isAdmin }) {
   const [selected, setSelected] = useState(null);
 
-  // Keep drawer in sync if entry gets removed
   useEffect(() => {
     if (selected && !entries.find(e => e.id === selected.id)) {
       setSelected(null);
@@ -216,6 +224,7 @@ function WaitlistTable({ entries, onScheduled, onDelete, updating }) {
         <table>
           <thead>
             <tr>
+              {isAdmin && <th>Office</th>}
               <th>Patient</th>
               <th>Phone</th>
               <th>Service</th>
@@ -232,6 +241,9 @@ function WaitlistTable({ entries, onScheduled, onDelete, updating }) {
                 className={`row-clickable ${e.priority === 'urgent' ? 'row-urgent' : ''} ${selected?.id === e.id ? 'row-selected' : ''}`}
                 onClick={() => setSelected(e)}
               >
+                {isAdmin && (
+                  <td className="td-office">{e.business_name || '—'}</td>
+                )}
                 <td className="td-name">{e.patient_name}</td>
                 <td className="td-phone" onClick={ev => ev.stopPropagation()}>
                   <a href={`tel:${e.phone}`} className="btn-call">📞 Call</a>
@@ -279,15 +291,87 @@ function WaitlistTable({ entries, onScheduled, onDelete, updating }) {
   );
 }
 
+// ─── Clients Tab (admin only) ─────────────────────────────────────────────────
+
+function ClientsTab({ token }) {
+  const [clients, setClients] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error,   setError]   = useState('');
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const r = await fetch('/api/dashboard/clients', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!r.ok) throw new Error('Failed to load clients');
+        const data = await r.json();
+        setClients(data.clients);
+      } catch (e) {
+        setError(e.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [token]);
+
+  if (loading) return <div className="page-center"><div className="spinner" /> Loading clients…</div>;
+  if (error)   return <div className="error-banner">⚠️ {error}</div>;
+
+  if (clients.length === 0) {
+    return (
+      <div className="empty-state">
+        <div className="icon">🏢</div>
+        <p>No clients yet. Add one in Supabase to get started.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Business Name</th>
+            <th>Slug</th>
+            <th>Timezone</th>
+            <th>Agent ID</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {clients.map(c => (
+            <tr key={c.id}>
+              <td className="td-name">{c.business_name}</td>
+              <td className="td-pref">{c.slug}</td>
+              <td className="td-pref">{c.timezone}</td>
+              <td className="td-date" title={c.agent_id}>{c.agent_id?.slice(0, 8)}…</td>
+              <td>
+                <span className={`badge ${c.active ? 'badge-routine' : 'badge-urgent'}`}>
+                  {c.active ? 'active' : 'inactive'}
+                </span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 // ─── Dashboard ───────────────────────────────────────────────────────────────
 
-function Dashboard({ token, onLogout }) {
-  const [entries,  setEntries]  = useState([]);
-  const [stats,    setStats]    = useState({ totalThisMonth: 0, urgentPending: 0, scheduledMonth: 0 });
-  const [filter,   setFilter]   = useState('all');
-  const [loading,  setLoading]  = useState(true);
-  const [error,    setError]    = useState('');
-  const [updating, setUpdating] = useState(new Set());
+function Dashboard({ token, user, onLogout }) {
+  const isAdmin = user?.role === 'admin';
+
+  const [entries,   setEntries]   = useState([]);
+  const [stats,     setStats]     = useState({ totalThisMonth: 0, urgentPending: 0, scheduledMonth: 0 });
+  const [filter,    setFilter]    = useState('all');
+  const [activeTab, setActiveTab] = useState('waitlist');
+  const [loading,   setLoading]   = useState(true);
+  const [error,     setError]     = useState('');
+  const [updating,  setUpdating]  = useState(new Set());
 
   const authHeaders = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
 
@@ -322,7 +406,6 @@ function Dashboard({ token, onLogout }) {
         body: JSON.stringify({ ids: [id] }),
       });
       if (!r.ok) throw new Error('Update failed');
-      // Remove from active list immediately
       setEntries(prev => prev.filter(e => e.id !== id));
       setStats(prev => ({
         ...prev,
@@ -354,65 +437,95 @@ function Dashboard({ token, onLogout }) {
     }
   }
 
-  // Client-side priority filter (data is already active-only from API)
   const filtered = entries.filter(e => {
     if (filter === 'urgent')  return e.priority === 'urgent';
     if (filter === 'routine') return e.priority === 'routine';
     return true;
   });
 
+  const headerTitle = isAdmin
+    ? 'Platform Admin'
+    : (user?.business_name || 'Admin Dashboard');
+
   return (
     <div className="layout">
       <header className="topbar">
         <div className="topbar-left">
           <span className="logo">🦷</span>
-          <h1>Hammond Dental</h1>
-          <span>Admin Dashboard</span>
+          <h1>{headerTitle}</h1>
+          {isAdmin
+            ? <span className="badge-admin">ADMIN</span>
+            : <span>Admin Dashboard</span>
+          }
         </div>
         <button className="btn-logout" onClick={onLogout}>Sign out</button>
       </header>
 
-      <main className="main">
-        {error && <div className="error-banner">⚠️ {error}</div>}
-
-        <StatsBar stats={stats} />
-
-        <div className="toolbar">
-          <div className="filter-group">
-            {FILTERS.map(f => (
-              <button
-                key={f.key}
-                className={`btn-filter ${filter === f.key ? 'active' : ''}`}
-                onClick={() => setFilter(f.key)}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-          <div className="toolbar-right">
-            <button className="btn-secondary" onClick={fetchData}>↻ Refresh</button>
-            <button
-              className="btn-secondary"
-              onClick={() => exportCSV(filtered)}
-              disabled={filtered.length === 0}
-            >
-              ↓ Export CSV
-            </button>
-          </div>
+      {isAdmin && (
+        <div className="tab-bar">
+          <button
+            className={`tab ${activeTab === 'waitlist' ? 'active' : ''}`}
+            onClick={() => setActiveTab('waitlist')}
+          >
+            Waitlist
+          </button>
+          <button
+            className={`tab ${activeTab === 'clients' ? 'active' : ''}`}
+            onClick={() => setActiveTab('clients')}
+          >
+            Clients
+          </button>
         </div>
+      )}
 
-        {loading ? (
-          <div className="page-center">
-            <div className="spinner" />
-            Loading leads…
-          </div>
+      <main className="main">
+        {activeTab === 'clients' && isAdmin ? (
+          <ClientsTab token={token} />
         ) : (
-          <WaitlistTable
-            entries={filtered}
-            onScheduled={handleScheduled}
-            onDelete={handleDelete}
-            updating={updating}
-          />
+          <>
+            {error && <div className="error-banner">⚠️ {error}</div>}
+
+            <StatsBar stats={stats} />
+
+            <div className="toolbar">
+              <div className="filter-group">
+                {FILTERS.map(f => (
+                  <button
+                    key={f.key}
+                    className={`btn-filter ${filter === f.key ? 'active' : ''}`}
+                    onClick={() => setFilter(f.key)}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+              <div className="toolbar-right">
+                <button className="btn-secondary" onClick={fetchData}>↻ Refresh</button>
+                <button
+                  className="btn-secondary"
+                  onClick={() => exportCSV(filtered)}
+                  disabled={filtered.length === 0}
+                >
+                  ↓ Export CSV
+                </button>
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="page-center">
+                <div className="spinner" />
+                Loading leads…
+              </div>
+            ) : (
+              <WaitlistTable
+                entries={filtered}
+                onScheduled={handleScheduled}
+                onDelete={handleDelete}
+                updating={updating}
+                isAdmin={isAdmin}
+              />
+            )}
+          </>
         )}
       </main>
     </div>
@@ -423,10 +536,18 @@ function Dashboard({ token, onLogout }) {
 
 export default function App() {
   const [token, setToken] = useState(() => sessionStorage.getItem(TOKEN_KEY));
+  const [user,  setUser]  = useState(() => {
+    try { return JSON.parse(sessionStorage.getItem(USER_KEY)); } catch { return null; }
+  });
 
-  function handleLogin(t)  { setToken(t); }
-  function handleLogout()  { sessionStorage.removeItem(TOKEN_KEY); setToken(null); }
+  function handleLogin(t, u)  { setToken(t); setUser(u); }
+  function handleLogout() {
+    sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(USER_KEY);
+    setToken(null);
+    setUser(null);
+  }
 
   if (!token) return <Login onLogin={handleLogin} />;
-  return <Dashboard token={token} onLogout={handleLogout} />;
+  return <Dashboard token={token} user={user} onLogout={handleLogout} />;
 }
