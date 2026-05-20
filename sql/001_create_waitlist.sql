@@ -24,6 +24,7 @@ CREATE INDEX IF NOT EXISTS idx_waitlist_created_at  ON waitlist (created_at DESC
 -- Row Level Security (service-role key bypasses this automatically)
 ALTER TABLE waitlist ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "service role full access" ON waitlist
+DROP POLICY IF EXISTS "service role full access" ON waitlist;
+CREATE POLICY "service role full access" ON waitlist
   USING (TRUE)
   WITH CHECK (TRUE);

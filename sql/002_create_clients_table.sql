@@ -20,7 +20,8 @@ CREATE INDEX IF NOT EXISTS idx_clients_active   ON clients (active);
 
 ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "service role full access" ON clients
+DROP POLICY IF EXISTS "service role full access" ON clients;
+CREATE POLICY "service role full access" ON clients
   USING (TRUE)
   WITH CHECK (TRUE);
 
