@@ -262,28 +262,82 @@ td { padding: 12px 16px; vertical-align: middle; }
   text-transform: uppercase;
 }
 
-/* ── Tab bar (admin only) ── */
-.tab-bar {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  padding: 0 24px;
-  gap: 4px;
+/* ── Admin client grid ── */
+.client-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
 }
-.tab {
+.client-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.client-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+.client-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.client-card-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+.client-card-stats {
+  display: flex;
+  gap: 24px;
+}
+.client-stat { display: flex; flex-direction: column; gap: 2px; }
+.client-stat-val {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+.client-stat-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.client-card-footer {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.client-card-footer.muted { opacity: 0.5; }
+.client-card-arrow {
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 500;
+  margin-top: auto;
+}
+
+/* ── Back button ── */
+.btn-back {
   background: none;
   border: none;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
-  color: var(--text-muted);
+  color: var(--accent);
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
-  padding: 12px 16px;
-  transition: color 0.15s, border-color 0.15s;
+  padding: 0;
+  margin-bottom: 20px;
+  display: inline-block;
 }
-.tab:hover { color: var(--text); }
-.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.btn-back:hover { text-decoration: underline; }
 
 /* ── Detail Drawer ── */
 .drawer-overlay {

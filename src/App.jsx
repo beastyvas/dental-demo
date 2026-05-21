@@ -74,8 +74,8 @@ function Login({ onLogin }) {
     <div className="login-wrap">
       <div className="login-card">
         <div className="logo">🦷</div>
-        <h1>Hammond Dental</h1>
-        <p>Admin Dashboard</p>
+        <h1>NickBuilds</h1>
+        <p>Receptionist Platform</p>
         <form onSubmit={handleSubmit}>
           <input
             type="password"
@@ -291,9 +291,9 @@ function WaitlistTable({ entries, onScheduled, onDelete, updating, isAdmin }) {
   );
 }
 
-// ─── Clients Tab (admin only) ─────────────────────────────────────────────────
+// ─── Admin Overview ──────────────────────────────────────────────────────────
 
-function ClientsTab({ token }) {
+function AdminOverview({ token, onSelectClient }) {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState('');
@@ -316,62 +316,80 @@ function ClientsTab({ token }) {
     load();
   }, [token]);
 
+  const totalLeads  = clients.reduce((s, c) => s + (c.stats?.monthLeads   ?? 0), 0);
+  const totalUrgent = clients.reduce((s, c) => s + (c.stats?.urgentActive ?? 0), 0);
+
   if (loading) return <div className="page-center"><div className="spinner" /> Loading clients…</div>;
   if (error)   return <div className="error-banner">⚠️ {error}</div>;
 
-  if (clients.length === 0) {
-    return (
-      <div className="empty-state">
-        <div className="icon">🏢</div>
-        <p>No clients yet. Add one in Supabase to get started.</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Business Name</th>
-            <th>Slug</th>
-            <th>Timezone</th>
-            <th>Agent ID</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {clients.map(c => (
-            <tr key={c.id}>
-              <td className="td-name">{c.business_name}</td>
-              <td className="td-pref">{c.slug}</td>
-              <td className="td-pref">{c.timezone}</td>
-              <td className="td-date" title={c.agent_id}>{c.agent_id?.slice(0, 8)}…</td>
-              <td>
-                <span className={`badge ${c.active ? 'badge-routine' : 'badge-urgent'}`}>
-                  {c.active ? 'active' : 'inactive'}
-                </span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div>
+      {/* Platform-wide stats */}
+      <div className="stats-row" style={{ marginBottom: 28 }}>
+        <div className="stat-card accent">
+          <div className="label">Active Clients</div>
+          <div className="value">{clients.length}</div>
+        </div>
+        <div className="stat-card urgent">
+          <div className="label">Urgent Active</div>
+          <div className="value">{totalUrgent}</div>
+        </div>
+        <div className="stat-card success">
+          <div className="label">Leads This Month</div>
+          <div className="value">{totalLeads}</div>
+        </div>
+      </div>
+
+      {/* Client cards */}
+      <div className="client-grid">
+        {clients.length === 0 ? (
+          <div className="empty-state">
+            <div className="icon">🏢</div>
+            <p>No clients yet — add one in Supabase to get started.</p>
+          </div>
+        ) : clients.map(c => (
+          <button key={c.id} className="client-card" onClick={() => onSelectClient(c)}>
+            <div className="client-card-header">
+              <div className="client-card-name">{c.business_name}</div>
+              {c.stats?.urgentActive > 0 && (
+                <span className="badge badge-urgent">{c.stats.urgentActive} urgent</span>
+              )}
+            </div>
+            <div className="client-card-stats">
+              <div className="client-stat">
+                <div className="client-stat-val">{c.stats?.activeLeads ?? 0}</div>
+                <div className="client-stat-label">Active Leads</div>
+              </div>
+              <div className="client-stat">
+                <div className="client-stat-val">{c.stats?.monthLeads ?? 0}</div>
+                <div className="client-stat-label">This Month</div>
+              </div>
+            </div>
+            {c.stats?.lastActivity && (
+              <div className="client-card-footer">
+                Last activity {fmtDate(c.stats.lastActivity)}
+              </div>
+            )}
+            {!c.stats?.lastActivity && (
+              <div className="client-card-footer muted">No activity yet</div>
+            )}
+            <div className="client-card-arrow">View leads →</div>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
 
-// ─── Dashboard ───────────────────────────────────────────────────────────────
+// ─── Client Leads View (shared by clients + admin drill-in) ──────────────────
 
-function Dashboard({ token, user, onLogout }) {
-  const isAdmin = user?.role === 'admin';
-
-  const [entries,   setEntries]   = useState([]);
-  const [stats,     setStats]     = useState({ totalThisMonth: 0, urgentPending: 0, scheduledMonth: 0 });
-  const [filter,    setFilter]    = useState('all');
-  const [activeTab, setActiveTab] = useState('waitlist');
-  const [loading,   setLoading]   = useState(true);
-  const [error,     setError]     = useState('');
-  const [updating,  setUpdating]  = useState(new Set());
+function ClientLeadsView({ token, clientId, onBack }) {
+  const [entries,  setEntries]  = useState([]);
+  const [stats,    setStats]    = useState({ totalThisMonth: 0, urgentPending: 0, scheduledMonth: 0 });
+  const [filter,   setFilter]   = useState('all');
+  const [loading,  setLoading]  = useState(true);
+  const [error,    setError]    = useState('');
+  const [updating, setUpdating] = useState(new Set());
 
   const authHeaders = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
 
@@ -379,8 +397,10 @@ function Dashboard({ token, user, onLogout }) {
     setLoading(true);
     setError('');
     try {
-      const r = await fetch('/api/dashboard/waitlist', { headers: authHeaders });
-      if (r.status === 401) { onLogout(); return; }
+      const url = clientId
+        ? `/api/dashboard/waitlist?adminClientId=${clientId}`
+        : '/api/dashboard/waitlist';
+      const r = await fetch(url, { headers: authHeaders });
       if (!r.ok) throw new Error('Failed to load data');
       const data = await r.json();
       setEntries(data.entries);
@@ -390,7 +410,7 @@ function Dashboard({ token, user, onLogout }) {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, clientId]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -401,22 +421,14 @@ function Dashboard({ token, user, onLogout }) {
     lockId(id);
     try {
       const r = await fetch('/api/dashboard/waitlist', {
-        method: 'PATCH',
-        headers: authHeaders,
+        method: 'PATCH', headers: authHeaders,
         body: JSON.stringify({ ids: [id] }),
       });
       if (!r.ok) throw new Error('Update failed');
       setEntries(prev => prev.filter(e => e.id !== id));
-      setStats(prev => ({
-        ...prev,
-        urgentPending:  entries.filter(e => e.id !== id && e.priority === 'urgent').length,
-        scheduledMonth: prev.scheduledMonth + 1,
-      }));
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      unlockId(id);
-    }
+      setStats(prev => ({ ...prev, scheduledMonth: prev.scheduledMonth + 1 }));
+    } catch (e) { setError(e.message); }
+    finally { unlockId(id); }
   }
 
   async function handleDelete(id) {
@@ -424,17 +436,13 @@ function Dashboard({ token, user, onLogout }) {
     lockId(id);
     try {
       const r = await fetch('/api/dashboard/waitlist', {
-        method: 'DELETE',
-        headers: authHeaders,
+        method: 'DELETE', headers: authHeaders,
         body: JSON.stringify({ ids: [id] }),
       });
       if (!r.ok) throw new Error('Delete failed');
       setEntries(prev => prev.filter(e => e.id !== id));
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      unlockId(id);
-    }
+    } catch (e) { setError(e.message); }
+    finally { unlockId(id); }
   }
 
   const filtered = entries.filter(e => {
@@ -443,9 +451,45 @@ function Dashboard({ token, user, onLogout }) {
     return true;
   });
 
-  const headerTitle = isAdmin
-    ? 'Platform Admin'
-    : (user?.business_name || 'Admin Dashboard');
+  return (
+    <main className="main">
+      {onBack && (
+        <button className="btn-back" onClick={onBack}>← All Clients</button>
+      )}
+      {error && <div className="error-banner">⚠️ {error}</div>}
+      <StatsBar stats={stats} />
+      <div className="toolbar">
+        <div className="filter-group">
+          {FILTERS.map(f => (
+            <button key={f.key}
+              className={`btn-filter ${filter === f.key ? 'active' : ''}`}
+              onClick={() => setFilter(f.key)}
+            >{f.label}</button>
+          ))}
+        </div>
+        <div className="toolbar-right">
+          <button className="btn-secondary" onClick={fetchData}>↻ Refresh</button>
+          <button className="btn-secondary" onClick={() => exportCSV(filtered)} disabled={filtered.length === 0}>↓ Export CSV</button>
+        </div>
+      </div>
+      {loading ? (
+        <div className="page-center"><div className="spinner" /> Loading leads…</div>
+      ) : (
+        <WaitlistTable entries={filtered} onScheduled={handleScheduled} onDelete={handleDelete} updating={updating} />
+      )}
+    </main>
+  );
+}
+
+// ─── Dashboard ───────────────────────────────────────────────────────────────
+
+function Dashboard({ token, user, onLogout }) {
+  const isAdmin = user?.role === 'admin';
+  const [selectedClient, setSelectedClient] = useState(null);
+
+  const headerTitle = selectedClient
+    ? selectedClient.business_name
+    : isAdmin ? 'NickBuilds' : (user?.business_name || 'Dashboard');
 
   return (
     <div className="layout">
@@ -453,81 +497,23 @@ function Dashboard({ token, user, onLogout }) {
         <div className="topbar-left">
           <span className="logo">🦷</span>
           <h1>{headerTitle}</h1>
-          {isAdmin
-            ? <span className="badge-admin">ADMIN</span>
-            : <span>Admin Dashboard</span>
-          }
+          {isAdmin && !selectedClient && <span className="badge-admin">ADMIN</span>}
+          {!isAdmin && <span>Dashboard</span>}
         </div>
         <button className="btn-logout" onClick={onLogout}>Sign out</button>
       </header>
 
-      {isAdmin && (
-        <div className="tab-bar">
-          <button
-            className={`tab ${activeTab === 'waitlist' ? 'active' : ''}`}
-            onClick={() => setActiveTab('waitlist')}
-          >
-            Waitlist
-          </button>
-          <button
-            className={`tab ${activeTab === 'clients' ? 'active' : ''}`}
-            onClick={() => setActiveTab('clients')}
-          >
-            Clients
-          </button>
-        </div>
+      {isAdmin && !selectedClient ? (
+        <main className="main">
+          <AdminOverview token={token} onSelectClient={setSelectedClient} />
+        </main>
+      ) : (
+        <ClientLeadsView
+          token={token}
+          clientId={isAdmin ? selectedClient?.id : null}
+          onBack={isAdmin ? () => setSelectedClient(null) : null}
+        />
       )}
-
-      <main className="main">
-        {activeTab === 'clients' && isAdmin ? (
-          <ClientsTab token={token} />
-        ) : (
-          <>
-            {error && <div className="error-banner">⚠️ {error}</div>}
-
-            <StatsBar stats={stats} />
-
-            <div className="toolbar">
-              <div className="filter-group">
-                {FILTERS.map(f => (
-                  <button
-                    key={f.key}
-                    className={`btn-filter ${filter === f.key ? 'active' : ''}`}
-                    onClick={() => setFilter(f.key)}
-                  >
-                    {f.label}
-                  </button>
-                ))}
-              </div>
-              <div className="toolbar-right">
-                <button className="btn-secondary" onClick={fetchData}>↻ Refresh</button>
-                <button
-                  className="btn-secondary"
-                  onClick={() => exportCSV(filtered)}
-                  disabled={filtered.length === 0}
-                >
-                  ↓ Export CSV
-                </button>
-              </div>
-            </div>
-
-            {loading ? (
-              <div className="page-center">
-                <div className="spinner" />
-                Loading leads…
-              </div>
-            ) : (
-              <WaitlistTable
-                entries={filtered}
-                onScheduled={handleScheduled}
-                onDelete={handleDelete}
-                updating={updating}
-                isAdmin={isAdmin}
-              />
-            )}
-          </>
-        )}
-      </main>
     </div>
   );
 }

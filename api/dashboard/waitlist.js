@@ -22,18 +22,17 @@ export default async function handler(req, res) {
 }
 
 async function handleGet(req, res, payload) {
-  const { priority, showScheduled, days } = req.query;
+  const { priority, showScheduled, days, adminClientId } = req.query;
   const isAdmin  = payload.role === 'admin';
-  const clientId = payload.client_id;
+  const clientId = isAdmin ? (adminClientId || null) : payload.client_id;
 
-  // Admin sees business_name via FK join; client sees own entries only
   let query = supabase
     .from('waitlist')
-    .select(isAdmin ? '*, clients(business_name)' : '*')
+    .select('*')
     .order('priority',   { ascending: false })
     .order('created_at', { ascending: false });
 
-  if (!isAdmin) {
+  if (clientId) {
     query = query.eq('client_id', clientId);
   }
 
