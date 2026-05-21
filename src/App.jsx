@@ -25,6 +25,29 @@ function fmtDate(iso) {
   });
 }
 
+function timeAgo(iso) {
+  if (!iso) return null;
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins  = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days  = Math.floor(diff / 86400000);
+  if (mins  <  2) return 'just now';
+  if (mins  < 60) return `${mins}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days  <  7) return `${days}d ago`;
+  return fmtDate(iso);
+}
+
+function clientHealth(c) {
+  if (c.stats?.urgentActive > 0) return { dot: 'health-urgent', label: 'Needs attention' };
+  const last = c.stats?.lastActivity;
+  if (!last) return { dot: 'health-none', label: 'No activity yet' };
+  const days = (Date.now() - new Date(last).getTime()) / 86400000;
+  if (days <= 3)  return { dot: 'health-active', label: 'Active' };
+  if (days <= 14) return { dot: 'health-idle',   label: 'Quiet' };
+  return { dot: 'health-none', label: 'Inactive' };
+}
+
 function exportCSV(entries) {
   const cols = ['patient_name','phone','service_needed','preferred_days','preferred_times','priority','created_at','notes','business_name'];
   const header = cols.join(',');
@@ -294,89 +317,131 @@ function WaitlistTable({ entries, onScheduled, onDelete, updating, isAdmin }) {
 // ─── Admin Overview ──────────────────────────────────────────────────────────
 
 function AdminOverview({ token, onSelectClient }) {
-  const [clients, setClients] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState('');
+  const [clients,   setClients]   = useState([]);
+  const [loading,   setLoading]   = useState(true);
+  const [error,     setError]     = useState('');
+  const [lastFetch, setLastFetch] = useState(null);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const r = await fetch('/api/dashboard/clients', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!r.ok) throw new Error('Failed to load clients');
-        const data = await r.json();
-        setClients(data.clients);
-      } catch (e) {
-        setError(e.message);
-      } finally {
-        setLoading(false);
-      }
+  async function load() {
+    setLoading(true);
+    setError('');
+    try {
+      const r = await fetch('/api/dashboard/clients', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!r.ok) throw new Error('Failed to load clients');
+      const data = await r.json();
+      setClients(data.clients);
+      setLastFetch(new Date());
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
     }
-    load();
-  }, [token]);
+  }
 
-  const totalLeads  = clients.reduce((s, c) => s + (c.stats?.monthLeads   ?? 0), 0);
-  const totalUrgent = clients.reduce((s, c) => s + (c.stats?.urgentActive ?? 0), 0);
+  useEffect(() => { load(); }, [token]);
 
-  if (loading) return <div className="page-center"><div className="spinner" /> Loading clients…</div>;
+  // Platform-wide totals
+  const totalActive  = clients.reduce((s, c) => s + (c.stats?.activeLeads  ?? 0), 0);
+  const totalUrgent  = clients.reduce((s, c) => s + (c.stats?.urgentActive ?? 0), 0);
+  const totalMonth   = clients.reduce((s, c) => s + (c.stats?.monthLeads   ?? 0), 0);
+  const needsAttention = clients.filter(c => (c.stats?.urgentActive ?? 0) > 0);
+
+  if (loading) return <div className="page-center"><div className="spinner" /> Loading platform…</div>;
   if (error)   return <div className="error-banner">⚠️ {error}</div>;
 
   return (
-    <div>
-      {/* Platform-wide stats */}
+    <div className="founder-view">
+
+      {/* Header row */}
+      <div className="founder-header">
+        <div>
+          <div className="founder-title">Platform Overview</div>
+          <div className="founder-subtitle">
+            {clients.length} active client{clients.length !== 1 ? 's' : ''} · receptionist network
+            {lastFetch && <span> · updated {timeAgo(lastFetch.toISOString())}</span>}
+          </div>
+        </div>
+        <button className="btn-secondary" onClick={load} disabled={loading}>↻ Refresh</button>
+      </div>
+
+      {/* Attention banner */}
+      {needsAttention.length > 0 && (
+        <div className="attention-banner">
+          🚨 <strong>{needsAttention.length} client{needsAttention.length > 1 ? 's' : ''} need attention</strong>
+          {' — '}
+          {needsAttention.map(c => c.business_name).join(', ')} has urgent unscheduled leads
+        </div>
+      )}
+
+      {/* Platform stats */}
       <div className="stats-row" style={{ marginBottom: 28 }}>
         <div className="stat-card accent">
           <div className="label">Active Clients</div>
           <div className="value">{clients.length}</div>
         </div>
+        <div className="stat-card">
+          <div className="label">Active Leads</div>
+          <div className="value">{totalActive}</div>
+        </div>
         <div className="stat-card urgent">
-          <div className="label">Urgent Active</div>
+          <div className="label">Urgent Pending</div>
           <div className="value">{totalUrgent}</div>
         </div>
         <div className="stat-card success">
           <div className="label">Leads This Month</div>
-          <div className="value">{totalLeads}</div>
+          <div className="value">{totalMonth}</div>
         </div>
       </div>
 
+      {/* Section label */}
+      <div className="section-label">Clients</div>
+
       {/* Client cards */}
-      <div className="client-grid">
-        {clients.length === 0 ? (
-          <div className="empty-state">
-            <div className="icon">🏢</div>
-            <p>No clients yet — add one in Supabase to get started.</p>
-          </div>
-        ) : clients.map(c => (
-          <button key={c.id} className="client-card" onClick={() => onSelectClient(c)}>
-            <div className="client-card-header">
-              <div className="client-card-name">{c.business_name}</div>
-              {c.stats?.urgentActive > 0 && (
-                <span className="badge badge-urgent">{c.stats.urgentActive} urgent</span>
-              )}
-            </div>
-            <div className="client-card-stats">
-              <div className="client-stat">
-                <div className="client-stat-val">{c.stats?.activeLeads ?? 0}</div>
-                <div className="client-stat-label">Active Leads</div>
-              </div>
-              <div className="client-stat">
-                <div className="client-stat-val">{c.stats?.monthLeads ?? 0}</div>
-                <div className="client-stat-label">This Month</div>
-              </div>
-            </div>
-            {c.stats?.lastActivity && (
-              <div className="client-card-footer">
-                Last activity {fmtDate(c.stats.lastActivity)}
-              </div>
-            )}
-            {!c.stats?.lastActivity && (
-              <div className="client-card-footer muted">No activity yet</div>
-            )}
-            <div className="client-card-arrow">View leads →</div>
-          </button>
-        ))}
-      </div>
+      {clients.length === 0 ? (
+        <div className="empty-state">
+          <div className="icon">🏢</div>
+          <p>No clients yet — add one in Supabase to get started.</p>
+        </div>
+      ) : (
+        <div className="client-grid">
+          {clients.map(c => {
+            const health = clientHealth(c);
+            const ago    = timeAgo(c.stats?.lastActivity);
+            return (
+              <button key={c.id} className="client-card" onClick={() => onSelectClient(c)}>
+                <div className="client-card-header">
+                  <div className="client-card-name-row">
+                    <span className={`health-dot ${health.dot}`} title={health.label} />
+                    <span className="client-card-name">{c.business_name}</span>
+                  </div>
+                  {c.stats?.urgentActive > 0 && (
+                    <span className="badge badge-urgent">{c.stats.urgentActive} urgent</span>
+                  )}
+                </div>
+
+                <div className="client-card-stats">
+                  <div className="client-stat">
+                    <div className="client-stat-val">{c.stats?.activeLeads ?? 0}</div>
+                    <div className="client-stat-label">Active</div>
+                  </div>
+                  <div className="client-stat">
+                    <div className="client-stat-val">{c.stats?.monthLeads ?? 0}</div>
+                    <div className="client-stat-label">This Month</div>
+                  </div>
+                  <div className="client-stat client-stat-health">
+                    <div className={`client-stat-status ${health.dot}`}>{health.label}</div>
+                    {ago && <div className="client-stat-label">{ago}</div>}
+                  </div>
+                </div>
+
+                <div className="client-card-arrow">View leads →</div>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
