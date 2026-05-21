@@ -30,12 +30,17 @@ export default async function handler(req, res) {
   }
 
   // 2. Client password check
-  const { data: client } = await supabase
+  const { data: client, error: clientErr } = await supabase
     .from('clients')
     .select('id, business_name')
     .eq('dashboard_password', password)
     .eq('active', true)
     .maybeSingle();
+
+  if (clientErr) {
+    console.error('clients query error:', clientErr);
+    return res.status(500).json({ error: 'Database error — check Vercel logs' });
+  }
 
   if (client) {
     const token = signToken({ role: 'client', client_id: client.id, business_name: client.business_name });
