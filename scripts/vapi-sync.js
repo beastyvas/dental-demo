@@ -55,6 +55,7 @@ const ASSISTANTS = {
     tools: [
       'meevo-availability-tool',
       'meevo-book-tool',
+      'meevo-new-member-tool',
       'emergency-tool',
     ],
   },

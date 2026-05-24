@@ -1,0 +1,41 @@
+{
+  "type": "function",
+  "function": {
+    "name": "logNewMemberInquiry",
+    "description": "Use this when a caller is not in the system (new member), calls after hours and can't be booked live, or is missing a card on file. Logs them to the dashboard and immediately texts the front desk so no one gets missed.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "guest_name": {
+          "type": "string",
+          "description": "Caller's full name"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Caller's phone number, digits only"
+        },
+        "service_interest": {
+          "type": "string",
+          "description": "What they want to book, e.g. '60-min Deep Tissue' — leave blank if they didn't say"
+        },
+        "reason": {
+          "type": "string",
+          "enum": ["new_member", "after_hours", "card_required"],
+          "description": "new_member = not in system and needs account setup; after_hours = office is closed; card_required = member but no card on file"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Any other details — therapist preference, gender preference, timing, anything useful for the front desk"
+        }
+      },
+      "required": ["guest_name", "phone", "reason"]
+    }
+  },
+  "server": {
+    "url": "https://YOUR_VERCEL_DOMAIN.vercel.app/api/meevo/new-member",
+    "timeoutSeconds": 20,
+    "headers": {
+      "x-vapi-secret": "{{VAPI_WEBHOOK_SECRET}}"
+    }
+  }
+}
