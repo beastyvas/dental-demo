@@ -17,7 +17,7 @@ import { getAllActiveClients }   from '../../lib/clients.js';
 function classify(entry) {
   const notes = (entry.notes ?? '').toUpperCase();
   if (entry.priority === 'urgent')       return 'urgent';
-  if (notes.includes('CONFIRMED VIA AI')) return 'booked';
+  if (notes.includes('BOOKED —'))         return 'booked';
   if (notes.includes('NEW MEMBER'))      return 'new_member';
   if (notes.includes('AFTER HOURS'))     return 'after_hours';
   if (notes.includes('CARD ON FILE'))    return 'card_required';

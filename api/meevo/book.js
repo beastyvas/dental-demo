@@ -59,7 +59,7 @@ export default async function handler(req, res) {
       preferred_days:  slot_description.trim(),
       preferred_times: '',
       priority:       'routine',
-      notes:          `CONFIRMED via AI — ${slot_description} | Conf#: ${confNum} | Booked: ${bookedAt}${notes ? ' | ' + notes : ''}`,
+      notes:          `BOOKED — ${slot_description} | Conf#: ${confNum} | ${bookedAt}${notes ? ' | ' + notes : ''}`,
       contacted:      false,
     }]);
 
