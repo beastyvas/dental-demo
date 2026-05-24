@@ -4,14 +4,89 @@
  * Schedule in vercel.json: "0 15 * * 1-6"
  *   (15:00 UTC = 8:00 AM PDT, Apr–Oct)
  *
- * Multi-tenant: loops all active clients and sends each a separate SMS summary.
- * Each summary covers uncontacted entries in the last 24 hours for that client.
+ * Multi-tenant: loops all active clients, sends each a categorized SMS recap.
+ * Categories: Meevo bookings, new members, after-hours requests, urgents.
  */
 
-import { supabase }           from '../../lib/supabase.js';
-import { sendSMS }            from '../../lib/sms.js';
+import { supabase }             from '../../lib/supabase.js';
+import { sendSMS }              from '../../lib/sms.js';
 import { formatInTZ, TIMEZONE } from '../../lib/timezone.js';
-import { getAllActiveClients } from '../../lib/clients.js';
+import { getAllActiveClients }   from '../../lib/clients.js';
+
+// Classify an entry by what's in its notes
+function classify(entry) {
+  const notes = (entry.notes ?? '').toUpperCase();
+  if (entry.priority === 'urgent')       return 'urgent';
+  if (notes.includes('CONFIRMED VIA AI')) return 'booked';
+  if (notes.includes('NEW MEMBER'))      return 'new_member';
+  if (notes.includes('AFTER HOURS'))     return 'after_hours';
+  if (notes.includes('CARD ON FILE'))    return 'card_required';
+  return 'callback';
+}
+
+function fmt(entry) {
+  return `${entry.patient_name} — ${entry.service_needed || 'service TBD'} | 📞 ${entry.phone}`;
+}
+
+function buildSMS(client, entries) {
+  const booked      = entries.filter(e => classify(e) === 'booked');
+  const newMembers  = entries.filter(e => classify(e) === 'new_member');
+  const afterHours  = entries.filter(e => classify(e) === 'after_hours');
+  const cardNeeded  = entries.filter(e => classify(e) === 'card_required');
+  const callbacks   = entries.filter(e => classify(e) === 'callback');
+  const urgents     = entries.filter(e => classify(e) === 'urgent');
+
+  let msg = `Good morning! Overnight recap for ${client.business_name}:\n\n`;
+
+  if (booked.length > 0) {
+    msg += `✅ MEEVO BOOKINGS (${booked.length}):\n`;
+    booked.forEach((e, i) => {
+      // Pull conf# and slot from notes if present
+      const confMatch = (e.notes ?? '').match(/Conf#:\s*([A-Z0-9-]+)/i);
+      const conf = confMatch ? ` | ${confMatch[1]}` : '';
+      msg += `${i + 1}. ${e.patient_name} — ${e.service_needed}${conf}\n`;
+      msg += `   Slot: ${e.preferred_days || '—'} | 📞 ${e.phone}\n`;
+    });
+    msg += '\n';
+  }
+
+  if (newMembers.length > 0) {
+    msg += `🆕 NEW MEMBERS — NEED SETUP (${newMembers.length}):\n`;
+    newMembers.forEach((e, i) => msg += `${i + 1}. ${fmt(e)}\n`);
+    msg += '\n';
+  }
+
+  if (afterHours.length > 0) {
+    msg += `🌙 AFTER-HOURS REQUESTS (${afterHours.length}):\n`;
+    afterHours.forEach((e, i) => msg += `${i + 1}. ${fmt(e)}\n`);
+    msg += '\n';
+  }
+
+  if (cardNeeded.length > 0) {
+    msg += `💳 CARD ON FILE MISSING (${cardNeeded.length}):\n`;
+    cardNeeded.forEach((e, i) => msg += `${i + 1}. ${fmt(e)}\n`);
+    msg += '\n';
+  }
+
+  if (callbacks.length > 0) {
+    msg += `📋 CALLBACKS NEEDED (${callbacks.length}):\n`;
+    callbacks.forEach((e, i) => msg += `${i + 1}. ${fmt(e)}\n`);
+    msg += '\n';
+  }
+
+  if (urgents.length > 0) {
+    msg += `🚨 URGENT (${urgents.length}):\n`;
+    urgents.forEach((e, i) => msg += `${i + 1}. ${fmt(e)}\n`);
+    msg += '\n';
+  }
+
+  const attention = newMembers.length + afterHours.length + cardNeeded.length + urgents.length;
+  msg += `Total: ${entries.length} overnight interaction${entries.length !== 1 ? 's' : ''}`;
+  if (attention > 0) msg += ` · ⚠️ ${attention} need${attention === 1 ? 's' : ''} attention`;
+  msg += `\n— Virtual Receptionist`;
+
+  return msg;
+}
 
 export default async function handler(req, res) {
   const authHeader = req.headers.authorization;
@@ -39,7 +114,6 @@ export default async function handler(req, res) {
         .eq('client_id', client.id)
         .eq('contacted', false)
         .gte('created_at', since)
-        .order('priority',   { ascending: false })
         .order('created_at', { ascending: true });
 
       if (error) {
@@ -49,59 +123,22 @@ export default async function handler(req, res) {
       }
 
       if (!entries || entries.length === 0) {
-        const msg =
-          `Good morning! No overnight waitlist entries for ${client.business_name}.\n\n` +
-          `Have a great day! — Virtual Receptionist`;
-        await sendSMS(client.front_desk_phone, msg);
+        await sendSMS(
+          client.front_desk_phone,
+          `Good morning! No overnight activity for ${client.business_name}. Have a great day! — Virtual Receptionist`
+        );
         results.push({ slug: client.slug, entryCount: 0 });
         continue;
       }
 
-      const routine = entries.filter(e => e.priority === 'routine');
-      const urgent  = entries.filter(e => e.priority === 'urgent');
-
-      let msg = `Good morning! Here's your overnight call summary for ${client.business_name}:\n\n`;
-
-      if (routine.length > 0) {
-        msg += `📋 WAITLIST ADDITIONS (${routine.length}):\n`;
-        routine.forEach((e, i) => {
-          const days  = e.preferred_days  || 'any day';
-          const times = e.preferred_times || 'any time';
-          msg += `${i + 1}. ${e.patient_name} — ${e.service_needed}, prefers ${days} / ${times}\n`;
-          msg += `   📞 ${e.phone}\n`;
-        });
-        msg += '\n';
-      }
-
-      if (urgent.length > 0) {
-        msg += `🚨 EMERGENCIES (${urgent.length}):\n`;
-        urgent.forEach((e, i) => {
-          const timeStr = formatInTZ(e.created_at, {
-            hour: 'numeric', minute: '2-digit', hour12: true,
-            weekday: undefined, year: undefined, month: undefined, day: undefined,
-          }, tz);
-          msg += `${i + 1}. ${e.patient_name} — ${e.service_needed}\n`;
-          msg += `   📞 ${e.phone}\n`;
-          msg += `   ⚠️ Already alerted at ${timeStr}\n`;
-        });
-        msg += '\n';
-      }
-
-      msg += `Total overnight inquiries: ${entries.length}\n`;
-      msg += `Have a great day! — Virtual Receptionist`;
-
+      const msg = buildSMS(client, entries);
       await sendSMS(client.front_desk_phone, msg);
 
-      // Mark all included entries as contacted
-      const ids = entries.map(e => e.id);
-      const { error: updateError } = await supabase
+      // Mark all as contacted
+      await supabase
         .from('waitlist')
         .update({ contacted: true })
-        .in('id', ids);
-
-      if (updateError) {
-        console.error(`[morning-summary] Failed to mark entries for ${client.slug}:`, updateError);
-      }
+        .in('id', entries.map(e => e.id));
 
       console.log(`[${formatInTZ(new Date(), {}, tz)}] Morning summary sent — ${client.slug}: ${entries.length} entries`);
       results.push({ slug: client.slug, entryCount: entries.length });
