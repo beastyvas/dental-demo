@@ -32,10 +32,10 @@ INSERT INTO clients (slug, business_name, agent_id, dashboard_password, doctor_p
 VALUES (
   'hammond-dental',
   'Hammond Dental',
-  'YOUR_VAPI_AGENT_ID',          -- e.g. 54da6a88-1e1e-4977-a216-1670b689a253
-  'YOUR_DASHBOARD_PASSWORD',     -- was in DASHBOARD_PASSWORD env var
-  'YOUR_DOCTOR_PHONE',           -- was in DOCTOR_EMERGENCY_PHONE env var
-  'YOUR_FRONT_DESK_PHONE',       -- was in FRONT_DESK_PHONE env var
+  '54da6a88-1e1e-4977-a216-1670b689a253',          -- e.g. 54da6a88-1e1e-4977-a216-1670b689a253
+  '7325',     -- was in DASHBOARD_PASSWORD env var
+  '7027209838',           -- was in DOCTOR_EMERGENCY_PHONE env var
+  '7027209838',       -- was in FRONT_DESK_PHONE env var
   'America/Los_Angeles'
 )
 ON CONFLICT (slug) DO NOTHING;

@@ -96,7 +96,7 @@ function Login({ onLogin }) {
   return (
     <div className="login-wrap">
       <div className="login-card">
-        <div className="logo">🦷</div>
+        <div className="logo">📞</div>
         <h1>NickBuilds</h1>
         <p>Receptionist Platform</p>
         <form onSubmit={handleSubmit}>
@@ -556,11 +556,16 @@ function Dashboard({ token, user, onLogout }) {
     ? selectedClient.business_name
     : isAdmin ? 'NickBuilds' : (user?.business_name || 'Dashboard');
 
+  useEffect(() => {
+    if (isAdmin && !selectedClient) document.title = 'NickBuilds — Admin';
+    else document.title = `${headerTitle} — Dashboard`;
+  }, [headerTitle, isAdmin, selectedClient]);
+
   return (
     <div className="layout">
       <header className="topbar">
         <div className="topbar-left">
-          <span className="logo">🦷</span>
+          <span className="logo">📞</span>
           <h1>{headerTitle}</h1>
           {isAdmin && !selectedClient && <span className="badge-admin">ADMIN</span>}
           {!isAdmin && <span>Dashboard</span>}

@@ -6,7 +6,8 @@
   "scripts": {
     "dev":    "vite",
     "build":  "vite build",
-    "preview":"vite preview"
+    "preview":"vite preview",
+    "vapi:sync": "node scripts/vapi-sync.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.43.0",

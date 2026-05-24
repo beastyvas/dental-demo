@@ -1,0 +1,40 @@
+{
+  "type": "function",
+  "function": {
+    "name": "bookAppointment",
+    "description": "Confirm and book the appointment after the caller has selected a slot from the availability results. Generates a confirmation number and logs the booking.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "guest_name": {
+          "type": "string",
+          "description": "Guest's full name"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Guest's phone number, digits only, including area code"
+        },
+        "service": {
+          "type": "string",
+          "description": "Full service string with all add-ons, e.g. '60-min Relaxation Massage + Hot Stone + CBD Enhancement (lavender)'"
+        },
+        "slot_description": {
+          "type": "string",
+          "description": "Human-readable description of the chosen slot, e.g. 'Wednesday, May 28 at 2:00 PM with Alex'"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Pressure preference, health concerns, therapist notes, membership status, first-time guest info"
+        }
+      },
+      "required": ["guest_name", "phone", "service", "slot_description"]
+    }
+  },
+  "server": {
+    "url": "https://YOUR_VERCEL_DOMAIN.vercel.app/api/meevo/book",
+    "timeoutSeconds": 20,
+    "headers": {
+      "x-vapi-secret": "{{VAPI_WEBHOOK_SECRET}}"
+    }
+  }
+}
