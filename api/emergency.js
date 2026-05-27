@@ -41,7 +41,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const doctorPhone = client?.doctor_phone ?? process.env.DOCTOR_EMERGENCY_PHONE;
+ const doctorPhone = client?.doctor_phone ?? process.env.DOCTOR_EMERGENCY_PHONE;
     if (!doctorPhone) {
       console.warn('[emergency] No doctor_phone configured — skipping SMS');
       return res.status(200).json({
@@ -53,16 +53,22 @@ export default async function handler(req, res) {
     }
 
     const tz = client?.timezone ?? TIMEZONE;
+    const fmtPhone = String(phone).replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{4})$/, '$1-$2-$3');
+
     const alertBody =
-      `🚨 URGENT — Emergency patient call:\n` +
-      `Patient: ${patient_name}\n` +
-      `Phone: ${phone}\n` +
-      `Issue: ${emergency_description}\n` +
-      `Called at: ${formatInTZ(new Date(), {}, tz)}\n` +
+      `URGENT - Emergency patient call. ` +
+      `Patient: ${patient_name}. ` +
+      `Callback: ${fmtPhone}. ` +
+      `Issue: ${emergency_description}. ` +
+      `Called at: ${formatInTZ(new Date(), {}, tz)}. ` +
       `Call them back ASAP.`;
 
-    await sendSMS(doctorPhone, alertBody);
-    console.log(`[${formatInTZ(new Date(), {}, tz)}] Emergency alert sent for ${patient_name} (${client?.slug ?? 'unknown'})`);
+    try {
+      await sendSMS(doctorPhone, alertBody);
+      console.log(`[emergency] SMS sent for ${patient_name} (${client?.slug ?? 'unknown'})`);
+    } catch (smsErr) {
+      console.error(`[emergency] SMS failed for ${patient_name}:`, smsErr.message);
+    }
 
     return res.status(200).json({
       results: [{
@@ -70,6 +76,7 @@ export default async function handler(req, res) {
         result: `Dr. ${client ? client.business_name.split(' ').pop() : 'Hammond'} has been alerted about ${patient_name}'s emergency and will call them back as soon as possible.`,
       }],
     });
+
   } catch (err) {
     console.error('Emergency handler error:', err);
     return res.status(500).json({ error: 'Internal server error' });
