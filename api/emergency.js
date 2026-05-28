@@ -57,11 +57,11 @@ export default async function handler(req, res) {
     const fmtPhone = String(phone).replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{4})$/, '$1-$2-$3');
 
     const alertBody =
-      `URGENT - Emergency patient call. ` +
-      `Patient: ${patient_name}. ` +
-      `Callback: ${fmtPhone}. ` +
-      `Issue: ${emergency_description}. ` +
-      `Called at: ${formatInTZ(new Date(), {}, tz)}. ` +
+      `🚨 URGENT — Emergency patient call:\n` +
+      `Patient: ${patient_name}\n` +
+      `Phone: ${fmtPhone}\n` +
+      `Issue: ${emergency_description}\n` +
+      `Called at: ${formatInTZ(new Date(), {}, tz)}\n` +
       `Call them back ASAP.`;
 
     try {

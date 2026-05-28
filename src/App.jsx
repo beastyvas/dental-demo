@@ -98,7 +98,7 @@ function Login({ onLogin }) {
       <div className="login-card">
         <div className="logo">📞</div>
         <h1>NickBuilds</h1>
-        <p>Receptionist Platform</p>
+        <p>Virtual Receptionist Platform</p>
         <form onSubmit={handleSubmit}>
           <input
             type="password"
@@ -131,9 +131,9 @@ function WelcomeBar({ businessName, demoPhone }) {
 
   return (
     <div className="welcome-bar">
-      <span>Welcome to <strong>{businessName}</strong>'s Virtual Receptionist Dashboard.</span>
-      {demo && <span>📞 Call <strong>{demo}</strong> to hear your receptionist in action.</span>}
-      <span>Call or text me directly — <strong>(702) 428-9920</strong></span>
+      <span>👋 Welcome, <strong>{businessName}</strong> — your receptionist is live and answering calls 24/7.</span>
+      {demo && <span>📞 Test it: call <strong>{demo}</strong> to hear your receptionist in action.</span>}
+      <span>Questions? Call or text Nick — <strong>(702) 428-9920</strong></span>
     </div>
   );
 }
@@ -380,7 +380,7 @@ function AdminOverview({ token, onSelectClient }) {
         <div>
           <div className="founder-title">Platform Overview</div>
           <div className="founder-subtitle">
-            {clients.length} active client{clients.length !== 1 ? 's' : ''} · receptionist network
+            {clients.length} active client{clients.length !== 1 ? 's' : ''} · virtual receptionists answering calls 24/7
             {lastFetch && <span> · updated {timeAgo(lastFetch.toISOString())}</span>}
           </div>
         </div>
