@@ -120,14 +120,20 @@ function Login({ onLogin }) {
 // ─── Welcome Bar ─────────────────────────────────────────────────────────────
 
 function WelcomeBar({ businessName, demoPhone }) {
-  const fmtPhone = p => p ? `(${p.slice(0,3)}) ${p.slice(3,6)}-${p.slice(6)}` : null;
+  const fmtPhone = p => {
+    if (!p) return null;
+    const digits = String(p).replace(/\D/g, '').slice(-10);
+    return digits.length === 10
+      ? `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`
+      : null;
+  };
   const demo = fmtPhone(demoPhone);
 
   return (
     <div className="welcome-bar">
       <span>Welcome to <strong>{businessName}</strong>'s Virtual Receptionist Dashboard.</span>
-      {demo && <span>📞 Call <strong>{demo}</strong> to hear Ava in action.</span>}
-      <span>Questions? Text Nick at <strong>(702) 428-9920</strong></span>
+      {demo && <span>📞 Call <strong>{demo}</strong> to hear your receptionist in action.</span>}
+      <span>Call or text me directly — <strong>(702) 428-9920</strong></span>
     </div>
   );
 }
