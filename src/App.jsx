@@ -125,7 +125,7 @@ function WelcomeBar({ businessName, demoPhone }) {
 
   return (
     <div className="welcome-bar">
-      <span>Welcome to <strong>{businessName}</strong>'s AI Receptionist Dashboard.</span>
+      <span>Welcome to <strong>{businessName}</strong>'s Virtual Receptionist Dashboard.</span>
       {demo && <span>📞 Call <strong>{demo}</strong> to hear Ava in action.</span>}
       <span>Questions? Text Nick at <strong>(702) 428-9920</strong></span>
     </div>

@@ -79,7 +79,7 @@ export default async function handler(req, res) {
 
       await sendSMS(
         frontDeskPhone,
-        `${smsLabel} via AI receptionist:\n` +
+        `${smsLabel} via virtual receptionist:\n` +
         `Name: ${guest_name}\n` +
         `Phone: ${phone}\n` +
         (service_interest ? `Wants: ${service_interest}\n` : '') +

@@ -53,21 +53,22 @@ export default async function handler(req, res) {
     }
 
     const tz = client?.timezone ?? TIMEZONE;
+    // Format phone with dashes so TextBelt doesn't flag bare digits as a URL
     const fmtPhone = String(phone).replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{4})$/, '$1-$2-$3');
 
     const alertBody =
-  `🚨 URGENT — Emergency patient call:\n` +
-  `Patient: ${patient_name}\n` +
-  `Phone: ${fmtPhone}\n` +
-  `Issue: ${emergency_description}\n` +
-  `Called at: ${formatInTZ(new Date(), {}, tz)}\n` +
-  `Call them back ASAP.`;
-
+      `URGENT - Emergency patient call. ` +
+      `Patient: ${patient_name}. ` +
+      `Callback: ${fmtPhone}. ` +
+      `Issue: ${emergency_description}. ` +
+      `Called at: ${formatInTZ(new Date(), {}, tz)}. ` +
+      `Call them back ASAP.`;
 
     try {
       await sendSMS(doctorPhone, alertBody);
-      console.log(`[emergency] SMS sent for ${patient_name} (${client?.slug ?? 'unknown'})`);
+      console.log(`[${formatInTZ(new Date(), {}, tz)}] Emergency alert sent for ${patient_name} (${client?.slug ?? 'unknown'})`);
     } catch (smsErr) {
+      // Log but do not 500 — Vapi must still get a success response so the call flow continues
       console.error(`[emergency] SMS failed for ${patient_name}:`, smsErr.message);
     }
 
