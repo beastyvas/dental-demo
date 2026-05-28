@@ -581,6 +581,20 @@ td { padding: 12px 16px; vertical-align: middle; }
   font-size: 13px;
 }
 
+/* ─── Welcome Bar ─────────────────────────────────────────────────────────── */
+.welcome-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+  padding: 9px 28px;
+  background: #0f1b2d;
+  border-bottom: 1px solid #1a2840;
+  font-size: 12.5px;
+  color: #6b82a8;
+}
+.welcome-bar strong { color: #a8bdd8; }
+
 @media (max-width: 768px) {
   .main { padding: 12px; }
   .topbar { padding: 0 12px; }

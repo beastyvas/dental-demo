@@ -84,8 +84,8 @@ function Login({ onLogin }) {
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'Login failed');
       sessionStorage.setItem(TOKEN_KEY, data.token);
-      sessionStorage.setItem(USER_KEY, JSON.stringify({ role: data.role, business_name: data.business_name }));
-      onLogin(data.token, { role: data.role, business_name: data.business_name });
+      sessionStorage.setItem(USER_KEY, JSON.stringify({ role: data.role, business_name: data.business_name, demo_phone: data.demo_phone ?? null }));
+      onLogin(data.token, { role: data.role, business_name: data.business_name, demo_phone: data.demo_phone ?? null });
     } catch (e) {
       setErr(e.message);
     } finally {
@@ -113,6 +113,21 @@ function Login({ onLogin }) {
         </form>
         {err && <div className="login-error">{err}</div>}
       </div>
+    </div>
+  );
+}
+
+// ─── Welcome Bar ─────────────────────────────────────────────────────────────
+
+function WelcomeBar({ businessName, demoPhone }) {
+  const fmtPhone = p => p ? `(${p.slice(0,3)}) ${p.slice(3,6)}-${p.slice(6)}` : null;
+  const demo = fmtPhone(demoPhone);
+
+  return (
+    <div className="welcome-bar">
+      <span>Welcome to <strong>{businessName}</strong>'s AI Receptionist Dashboard.</span>
+      {demo && <span>📞 Call <strong>{demo}</strong> to hear Ava in action.</span>}
+      <span>Questions? Text Nick at <strong>(702) 428-9920</strong></span>
     </div>
   );
 }
@@ -572,6 +587,10 @@ function Dashboard({ token, user, onLogout }) {
         </div>
         <button className="btn-logout" onClick={onLogout}>Sign out</button>
       </header>
+
+      {!isAdmin && (
+        <WelcomeBar businessName={user?.business_name} demoPhone={user?.demo_phone} />
+      )}
 
       {isAdmin && !selectedClient ? (
         <main className="main">

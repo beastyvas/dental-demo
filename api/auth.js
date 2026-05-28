@@ -32,7 +32,7 @@ export default async function handler(req, res) {
   // 2. Client password check
   const { data: client, error: clientErr } = await supabase
     .from('clients')
-    .select('id, business_name')
+    .select('id, business_name, demo_phone')
     .eq('dashboard_password', password)
     .eq('active', true)
     .maybeSingle();
@@ -44,7 +44,12 @@ export default async function handler(req, res) {
 
   if (client) {
     const token = signToken({ role: 'client', client_id: client.id, business_name: client.business_name });
-    return res.status(200).json({ token, role: 'client', business_name: client.business_name });
+    return res.status(200).json({
+      token,
+      role: 'client',
+      business_name: client.business_name,
+      demo_phone: client.demo_phone ?? null,
+    });
   }
 
   await new Promise(r => setTimeout(r, 300));
