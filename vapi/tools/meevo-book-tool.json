@@ -2,7 +2,7 @@
   "type": "function",
   "function": {
     "name": "bookAppointment",
-    "description": "Confirm and book the appointment after the caller has selected a slot from the availability results. Generates a confirmation number and logs the booking.",
+    "description": "Confirm and book the appointment after the caller has selected a slot from the availability results. Pass back all slot metadata from the availability response to enable accurate booking.",
     "parameters": {
       "type": "object",
       "properties": {
@@ -21,6 +21,22 @@
         "slot_description": {
           "type": "string",
           "description": "Human-readable description of the chosen slot, e.g. 'Wednesday, May 28 at 2:00 PM with Alex'"
+        },
+        "staff_name": {
+          "type": "string",
+          "description": "Name of the therapist for the chosen slot"
+        },
+        "raw_start": {
+          "type": "string",
+          "description": "ISO 8601 datetime of the chosen slot as returned by checkAvailability, e.g. '2025-05-28T14:00:00'. Pass exactly as received."
+        },
+        "slot_service_id": {
+          "type": "string",
+          "description": "Meevo service ID from the chosen availability slot. Pass exactly as received from checkAvailability."
+        },
+        "slot_staff_id": {
+          "type": "string",
+          "description": "Meevo staff ID from the chosen availability slot. Pass exactly as received from checkAvailability."
         },
         "notes": {
           "type": "string",

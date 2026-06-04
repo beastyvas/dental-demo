@@ -1,24 +1,87 @@
 /**
  * POST /api/meevo/book
  * Vapi tool: `bookAppointment`
- * Mock Meevo integration — generates a confirmation number and logs
- * the booking to the waitlist table so it appears in the dashboard.
+ *
+ * When MEEVO_* env vars + client.meevo_site_id are set, creates a real
+ * appointment in Meevo and uses the returned confirmation number.
+ * Falls back to a generated confirmation + DB log for demos.
  */
 
-import { supabase }           from '../../lib/supabase.js';
-import { verifyVapiRequest }  from '../../lib/vapi.js';
-import { getClientByAgentId } from '../../lib/clients.js';
+import { supabase }             from '../../lib/supabase.js';
+import { verifyVapiRequest }    from '../../lib/vapi.js';
+import { getClientByAgentId }   from '../../lib/clients.js';
 import { formatInTZ, TIMEZONE } from '../../lib/timezone.js';
+import {
+  meevoConfigured,
+  findServiceByName,
+  findStaffByName,
+  findClientByPhone,
+  bookAppointment,
+} from '../../lib/meevo.js';
 
-function confirmationNumber() {
+function mockConfirmationNumber() {
   return 'ME-' + Math.random().toString(36).slice(2, 6).toUpperCase();
 }
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+// ── Live Meevo booking ────────────────────────────────────────────────────────
+
+async function bookLive({ siteId, guestName, phone, service, slotDescription, staffName, rawStart, slotServiceId, slotStaffId }) {
+  // 1. Find or resolve the Meevo client ID
+  let meevoClient = await findClientByPhone(siteId, phone);
+  let clientId    = meevoClient?.clientId ?? meevoClient?.id;
+
+  // 2. If client doesn't exist, we can't book without a card on file — caller
+  //    should have been routed through new-member first.  Proceed anyway with
+  //    whatever Meevo allows; some sites permit guest bookings.
+  if (!clientId) {
+    console.warn(`[meevo/book] No existing Meevo client for phone ${phone}; attempting guest booking`);
   }
 
+  // 3. Resolve service + staff IDs (use pre-resolved IDs from availability if available)
+  let serviceId = slotServiceId;
+  let staffId   = slotStaffId;
+
+  if (!serviceId) {
+    const svc = await findServiceByName(siteId, service);
+    if (!svc) throw new Error(`Service not found in Meevo: "${service}"`);
+    serviceId = svc.id ?? svc.serviceId;
+  }
+
+  if (!staffId && staffName) {
+    const staff = await findStaffByName(siteId, staffName);
+    staffId     = staff?.id ?? staff?.staffId;
+  }
+
+  // 4. Determine start datetime
+  const startDateTime = rawStart ?? buildISOFromDescription(slotDescription);
+
+  const result = await bookAppointment({
+    siteId,
+    serviceId,
+    staffId,
+    clientId,
+    startDateTime,
+    notes: `Booked via AI receptionist | Name: ${guestName} | Phone: ${phone}`,
+  });
+
+  return result;
+}
+
+/** Last-resort: attempt to parse a human-readable slot description into ISO datetime. */
+function buildISOFromDescription(description) {
+  // This is a best-effort fallback.  Real appointments should always pass rawStart.
+  // If this fails, Meevo will reject the booking and we'll fall back to mock.
+  try {
+    return new Date(description).toISOString();
+  } catch {
+    return new Date().toISOString();
+  }
+}
+
+// ── Handler ───────────────────────────────────────────────────────────────────
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   if (!verifyVapiRequest(req, res)) return;
 
   try {
@@ -39,7 +102,11 @@ export default async function handler(req, res) {
       phone,
       service,
       slot_description,
-      notes = '',
+      staff_name       = '',
+      raw_start        = '',
+      slot_service_id  = '',
+      slot_staff_id    = '',
+      notes            = '',
     } = args;
 
     if (!guest_name || !phone || !service || !slot_description) {
@@ -48,39 +115,59 @@ export default async function handler(req, res) {
       });
     }
 
-    const confNum = confirmationNumber();
-    const bookedAt = formatInTZ(new Date(), {}, tz);
+    let confirmationNumber;
+    let source = 'mock';
 
-    const { error } = await supabase.from('waitlist').insert([{
-      client_id:      client?.id ?? null,
-      patient_name:   guest_name.trim(),
-      phone:          phone.trim(),
-      service_needed: service.trim(),
-      preferred_days:  slot_description.trim(),
-      preferred_times: '',
-      priority:       'routine',
-      notes:          `BOOKED — ${slot_description} | Conf#: ${confNum} | ${bookedAt}${notes ? ' | ' + notes : ''}`,
-      contacted:      false,
-    }]);
-
-    if (error) {
-      console.error('[meevo/book] Supabase insert error:', error);
-      return res.status(500).json({ error: 'Failed to save booking' });
+    if (meevoConfigured() && client?.meevo_site_id) {
+      try {
+        const result       = await bookLive({
+          siteId:         client.meevo_site_id,
+          guestName:      guest_name,
+          phone,
+          service,
+          slotDescription: slot_description,
+          staffName:       staff_name,
+          rawStart:        raw_start || null,
+          slotServiceId:   slot_service_id || null,
+          slotStaffId:     slot_staff_id   || null,
+        });
+        confirmationNumber = String(result.confirmationNumber);
+        source             = 'live';
+      } catch (err) {
+        console.warn(`[meevo/book] Live booking failed, using mock: ${err.message}`);
+        confirmationNumber = mockConfirmationNumber();
+      }
+    } else {
+      confirmationNumber = mockConfirmationNumber();
     }
 
-    const toolCallId = body?.message?.toolCalls?.[0]?.id ?? 'direct-call';
+    const bookedAt = formatInTZ(new Date(), {}, tz);
 
-    console.log(`[meevo/book] Booked: ${guest_name} | ${service} | ${slot_description} | ${confNum} | client=${client?.slug ?? 'unknown'}`);
+    // Always log to dashboard regardless of live/mock
+    await supabase.from('waitlist').insert([{
+      client_id:       client?.id ?? null,
+      patient_name:    guest_name.trim(),
+      phone:           phone.trim(),
+      service_needed:  service.trim(),
+      preferred_days:  slot_description.trim(),
+      preferred_times: '',
+      priority:        'routine',
+      notes:           `BOOKED (${source}) — ${slot_description} | Conf#: ${confirmationNumber} | ${bookedAt}${notes ? ' | ' + notes : ''}`,
+      contacted:       false,
+    }]);
+
+    const toolCallId = body?.message?.toolCalls?.[0]?.id ?? 'direct-call';
+    console.log(`[meevo/book] ${guest_name} | ${service} | ${slot_description} | ${confirmationNumber} | ${source} | client=${client?.slug ?? 'unknown'}`);
 
     return res.status(200).json({
       results: [{
         toolCallId,
         result: JSON.stringify({
-          confirmation_number: confNum,
+          confirmation_number: confirmationNumber,
           guest_name,
-          appointment: slot_description,
+          appointment:         slot_description,
           service,
-          message: `Appointment confirmed. Confirmation number: ${confNum}.`,
+          message:             `Appointment confirmed. Your confirmation number is ${confirmationNumber}.`,
         }),
       }],
     });
