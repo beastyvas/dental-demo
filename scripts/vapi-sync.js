@@ -62,7 +62,7 @@ const ASSISTANTS = {
   'maintenance-america': {
     id:           '2016b703-41c0-4b5d-8505-5bc5bcf17cf3',
     promptFile:   'vapi/prompts/maintenance-america-prompt.md',
-    firstMessage: 'Thanks for calling Maintenance America, this is Megan! How can I help you today?',
+    firstMessage: 'Thank you for calling Maintenance America. This is Arianna, your scheduling assistant. How may I help you today?',
     tools: [
       'office-status-tool',
       'calendar-book-tool',

@@ -14,7 +14,9 @@
 
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS calendar_id TEXT;
 
--- Maintenance America — replace with the real calendar ID before the demo.
+-- Maintenance America (Arianna) — early demo client, bookings land on the
+-- same shared demo Google calendar as the generic demo agent for now.
+-- Swap to a dedicated business calendar later by updating this value.
 UPDATE clients
-SET calendar_id = 'REPLACE_WITH_CALENDAR_ID'
+SET calendar_id = 'vasquezjrnick@gmail.com'
 WHERE slug = 'maintenance-america';
