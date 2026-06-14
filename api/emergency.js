@@ -75,7 +75,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       results: [{
         toolCallId: body?.message?.toolCalls?.[0]?.id ?? 'direct-call',
-        result: `Dr. ${client ? client.business_name.split(' ').pop() : 'Hammond'} has been alerted about ${patient_name}'s emergency and will call them back as soon as possible.`,
+        result: `${client?.business_name ?? 'Our team'} has been alerted about ${patient_name}'s emergency and will call them back as soon as possible.`,
       }],
     });
 

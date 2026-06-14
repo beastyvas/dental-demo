@@ -1,0 +1,52 @@
+{
+  "type": "function",
+  "function": {
+    "name": "bookAppointment",
+    "description": "Books an appointment once the caller has confirmed a specific date and time. Creates a calendar event and logs the booking to the dashboard. Always confirm the date and time (and address, if relevant) back to the caller before calling this.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "customer_name": {
+          "type": "string",
+          "description": "Caller's full name"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Caller's callback phone number, including area code"
+        },
+        "service": {
+          "type": "string",
+          "description": "What the appointment is for, phrased naturally for this business, e.g. 'AC not cooling - diagnostic', 'Teeth cleaning', 'Haircut and color', 'Dinner reservation for 4'"
+        },
+        "address": {
+          "type": "string",
+          "description": "Service address — only include this if the business goes to the customer (e.g. home services, mobile repair). Omit for businesses the customer visits."
+        },
+        "appointment_date": {
+          "type": "string",
+          "description": "Appointment date in YYYY-MM-DD format"
+        },
+        "appointment_time": {
+          "type": "string",
+          "description": "Appointment start time, e.g. '2:00 PM'"
+        },
+        "duration_minutes": {
+          "type": "number",
+          "description": "Expected length of the appointment in minutes. Pick something appropriate for the service (e.g. 30 for a quick visit, 60 for a standard appointment, 90-120 for an in-home service call). Defaults to 60 if not specified."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Any additional details the caller mentioned"
+        }
+      },
+      "required": ["customer_name", "phone", "service", "appointment_date", "appointment_time"]
+    }
+  },
+  "server": {
+    "url": "https://YOUR_VERCEL_DOMAIN.vercel.app/api/calendar/book",
+    "timeoutSeconds": 20,
+    "headers": {
+      "x-vapi-secret": "{{VAPI_WEBHOOK_SECRET}}"
+    }
+  }
+}

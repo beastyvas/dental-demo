@@ -2,7 +2,7 @@
   "type": "function",
   "function": {
     "name": "checkOfficeHours",
-    "description": "Checks whether Hammond Dental is currently open or closed based on Las Vegas local time. Call this at the very start of every call, before your greeting, so you know which mode to use.",
+    "description": "Checks whether the office is currently open or closed based on local time, and returns the current date and time. Call this at the very start of every call, before your greeting, so you know today's date and which mode to use.",
     "parameters": {
       "type": "object",
       "properties": {},

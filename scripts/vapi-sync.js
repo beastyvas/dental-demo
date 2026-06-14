@@ -59,6 +59,28 @@ const ASSISTANTS = {
       'emergency-tool',
     ],
   },
+  'maintenance-america': {
+    id:           '2016b703-41c0-4b5d-8505-5bc5bcf17cf3',
+    promptFile:   'vapi/prompts/maintenance-america-prompt.md',
+    firstMessage: 'Thanks for calling Maintenance America, this is Megan! How can I help you today?',
+    tools: [
+      'office-status-tool',
+      'calendar-book-tool',
+      'waitlist-tool',
+      'emergency-tool',
+    ],
+  },
+  'demo': {
+    id:           '73ce919c-a2f9-420e-bb7f-323a79fdac69',
+    promptFile:   'vapi/prompts/demo-agent-prompt.md',
+    firstMessage: 'Hi there! Thanks for calling — for this demo, what type of business should I be the receptionist for today?',
+    tools: [
+      'office-status-tool',
+      'calendar-book-tool',
+      'waitlist-tool',
+      'emergency-tool',
+    ],
+  },
   // 'hammond-dental': { ... }  ← add more clients here
 };
 
