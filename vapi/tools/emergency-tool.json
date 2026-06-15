@@ -2,7 +2,7 @@
   "type": "function",
   "function": {
     "name": "sendEmergencyAlert",
-    "description": "Immediately notifies Dr. Hammond via SMS about an emergency patient. Use this during business hours when a patient describes an emergency and you need to alert the doctor RIGHT NOW — even if the patient is coming in directly and doesn't need to be added to the waitlist.",
+    "description": "Immediately notifies the on-call team via SMS about an urgent call, and logs it to the dashboard as an urgent entry. Use this during business hours when a caller describes an emergency or urgent issue that needs attention RIGHT NOW.",
     "parameters": {
       "type": "object",
       "properties": {
