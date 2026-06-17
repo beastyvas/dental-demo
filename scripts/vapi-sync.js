@@ -81,6 +81,17 @@ const ASSISTANTS = {
       'emergency-tool',
     ],
   },
+  'bhrc-henderson': {
+    id:           'aeec7c93-00d7-4c4a-96fe-8568d92113ea',
+    promptFile:   'vapi/prompts/bhrc-henderson-prompt.md',
+    firstMessage: 'Thank you for calling Beverly Hills Rejuvenation Center, this is Arianna. How can I help you today?',
+    tools: [
+      'office-status-tool',
+      'calendar-book-tool',
+      'waitlist-tool',
+      'emergency-tool',
+    ],
+  },
   // 'hammond-dental': { ... }  ← add more clients here
 };
 
