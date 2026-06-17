@@ -77,7 +77,7 @@ export default async function handler(req, res) {
   // 2. Client password check
   const { data: client, error: clientErr } = await supabase
     .from('clients')
-    .select('id, business_name, demo_phone')
+    .select('id, business_name, demo_phone, review_funnel_enabled')
     .eq('dashboard_password', password)
     .eq('active', true)
     .maybeSingle();
@@ -95,6 +95,7 @@ export default async function handler(req, res) {
       role: 'client',
       business_name: client.business_name,
       demo_phone: client.demo_phone ?? null,
+      review_funnel_enabled: client.review_funnel_enabled ?? false,
     });
   }
 

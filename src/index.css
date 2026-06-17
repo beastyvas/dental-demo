@@ -78,6 +78,73 @@ input:focus { border-color: var(--accent); }
 .login-card .btn-primary:hover:not(:disabled) { opacity: 0.85; }
 .login-error { color: var(--urgent); font-size: 13px; margin-top: 10px; }
 
+/* ── Review Funnel ── */
+.review-card .logo { font-size: 40px; }
+.review-card h1 { font-size: 18px; }
+.review-card form { display: flex; flex-direction: column; gap: 12px; }
+.review-card input,
+.review-card textarea { width: 100%; }
+.review-textarea {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  padding: 10px 14px;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.15s;
+}
+.review-textarea:focus { border-color: var(--accent); }
+.star-row { display: flex; justify-content: center; gap: 8px; margin: 24px 0; }
+.star {
+  background: none;
+  border: none;
+  font-size: 36px;
+  line-height: 1;
+  color: var(--border);
+  padding: 0;
+  transition: color 0.15s, transform 0.1s;
+}
+.star:hover { transform: scale(1.1); }
+.star-filled { color: #e3b341; }
+
+/* ── Review Funnel (dashboard) ── */
+.review-funnel-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 24px;
+}
+.review-funnel-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.review-funnel-blurb { color: var(--text-muted); font-size: 12px; margin-bottom: 14px; }
+.review-funnel-form { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.review-funnel-form input { flex: 1; min-width: 160px; }
+.review-funnel-form .btn-primary { background: var(--accent); color: #fff; padding: 8px 16px; white-space: nowrap; }
+
+.review-log-empty { color: var(--text-muted); font-size: 12px; }
+.review-log-table { width: 100%; font-size: 12px; border-collapse: collapse; }
+.review-log-table th {
+  color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em;
+  font-size: 10px; text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border);
+}
+.review-log-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); }
+.review-log-table tr:last-child td { border-bottom: none; }
+
+.review-admin-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.review-toggle { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+.review-toggle input { width: auto; }
+.review-link-input { flex: 1; min-width: 220px; }
+
+.review-stats-row { display: flex; gap: 24px; margin: 12px 0 16px; }
+.review-stat { display: flex; flex-direction: column; gap: 2px; }
+.review-stat-val { font-size: 22px; font-weight: 700; color: var(--accent); line-height: 1; }
+.review-stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; }
+
+.review-badge-row { font-size: 12px; color: var(--text-muted); }
+
 /* ── Layout ── */
 .layout { display: flex; flex-direction: column; min-height: 100vh; }
 
@@ -97,6 +164,15 @@ input:focus { border-color: var(--accent); }
 .topbar-left .logo { font-size: 22px; }
 .topbar-left h1 { font-size: 16px; font-weight: 600; }
 .topbar-left span { color: var(--text-muted); font-size: 13px; }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.demo-pill {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  color: var(--text-muted); font-size: 12px; font-weight: 500;
+  padding: 5px 12px; border-radius: 20px;
+  text-decoration: none; transition: color 0.15s, border-color 0.15s;
+}
+.demo-pill:hover { color: var(--text); border-color: var(--accent); }
 .btn-logout { background: var(--surface-2); color: var(--text-muted); padding: 6px 14px; border: 1px solid var(--border); }
 .btn-logout:hover { color: var(--text); }
 
@@ -581,9 +657,9 @@ td { padding: 12px 16px; vertical-align: middle; }
   font-size: 13px;
 }
 
-/* ─── Welcome Bar ─────────────────────────────────────────────────────────── */
+/* ─── Welcome Bar (removed) ──────────────────────────────────────────────── */
 .welcome-bar {
-  display: flex;
+  display: none;
   flex-wrap: wrap;
   align-items: center;
   gap: 20px;

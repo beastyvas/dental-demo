@@ -83,9 +83,15 @@ function Login({ onLogin }) {
       });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'Login failed');
+      const user = {
+        role: data.role,
+        business_name: data.business_name,
+        demo_phone: data.demo_phone ?? null,
+        review_funnel_enabled: data.review_funnel_enabled ?? false,
+      };
       sessionStorage.setItem(TOKEN_KEY, data.token);
-      sessionStorage.setItem(USER_KEY, JSON.stringify({ role: data.role, business_name: data.business_name, demo_phone: data.demo_phone ?? null }));
-      onLogin(data.token, { role: data.role, business_name: data.business_name, demo_phone: data.demo_phone ?? null });
+      sessionStorage.setItem(USER_KEY, JSON.stringify(user));
+      onLogin(data.token, user);
     } catch (e) {
       setErr(e.message);
     } finally {
@@ -119,23 +125,12 @@ function Login({ onLogin }) {
 
 // ─── Welcome Bar ─────────────────────────────────────────────────────────────
 
-function WelcomeBar({ businessName, demoPhone }) {
-  const fmtPhone = p => {
-    if (!p) return null;
-    const digits = String(p).replace(/\D/g, '').slice(-10);
-    return digits.length === 10
-      ? `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`
-      : null;
-  };
-  const demo = fmtPhone(demoPhone);
-
-  return (
-    <div className="welcome-bar">
-      <span>👋 Welcome, <strong>{businessName}</strong> — your receptionist is live and answering calls 24/7.</span>
-      {demo && <span>📞 Test it: call <strong>{demo}</strong> to hear your receptionist in action.</span>}
-      <span>Questions? Call or text Nick — <strong>(702) 428-9920</strong></span>
-    </div>
-  );
+function fmtPhone(p) {
+  if (!p) return null;
+  const digits = String(p).replace(/\D/g, '').slice(-10);
+  return digits.length === 10
+    ? `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`
+    : null;
 }
 
 // ─── Stats Bar ───────────────────────────────────────────────────────────────
@@ -457,6 +452,12 @@ function AdminOverview({ token, onSelectClient }) {
                   </div>
                 </div>
 
+                {c.reviewStats && (
+                  <div className="review-badge-row">
+                    ⭐ {c.reviewStats.avgRating ?? '—'} avg · {c.reviewStats.sent} sent · {c.reviewStats.clicked} clicked
+                  </div>
+                )}
+
                 <div className="client-card-arrow">View leads →</div>
               </button>
             );
@@ -467,9 +468,181 @@ function AdminOverview({ token, onSelectClient }) {
   );
 }
 
+// ─── Review Funnel (business view — compact, only shown when enabled) ───────
+
+function ReviewFunnelLog({ entries }) {
+  if (entries.length === 0) {
+    return <p className="review-log-empty">No review requests sent yet.</p>;
+  }
+  return (
+    <table className="review-log-table">
+      <thead>
+        <tr><th>Name</th><th>Phone</th><th>Sent</th><th>Clicked</th><th>Rating</th></tr>
+      </thead>
+      <tbody>
+        {entries.slice(0, 8).map(e => (
+          <tr key={e.id}>
+            <td>{e.patient_name}</td>
+            <td>{e.patient_phone}</td>
+            <td>{fmtDate(e.sent_at)}</td>
+            <td>{e.clicked ? '✓' : '—'}</td>
+            <td>{e.rating ? `${e.rating}★` : '—'}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function ReviewFunnelSection({ token }) {
+  const [entries,   setEntries]   = useState([]);
+  const [loading,   setLoading]   = useState(true);
+  const [name,      setName]      = useState('');
+  const [phone,     setPhone]     = useState('');
+  const [sending,   setSending]   = useState(false);
+  const [err,       setErr]       = useState('');
+
+  const authHeaders = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+
+  async function load() {
+    setLoading(true);
+    try {
+      const r = await fetch('/api/dashboard/review-requests', { headers: authHeaders });
+      if (!r.ok) throw new Error('Failed to load review requests');
+      const data = await r.json();
+      setEntries(data.entries);
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { load(); }, [token]);
+
+  async function handleSend(e) {
+    e.preventDefault();
+    setSending(true);
+    setErr('');
+    try {
+      const r = await fetch('/api/dashboard/review-requests', {
+        method: 'POST', headers: authHeaders,
+        body: JSON.stringify({ patient_name: name, patient_phone: phone }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Failed to send');
+      setName('');
+      setPhone('');
+      load();
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="review-funnel-card">
+      <div className="review-funnel-title">⭐ Review Funnel</div>
+      <p className="review-funnel-blurb">
+        Text a quick review request after a visit — 5★ goes straight to Google, anything less comes to you privately.
+      </p>
+      <form className="review-funnel-form" onSubmit={handleSend}>
+        <input placeholder="Patient name" value={name} onChange={e => setName(e.target.value)} required />
+        <input placeholder="Phone number" value={phone} onChange={e => setPhone(e.target.value)} required />
+        <button className="btn-primary" disabled={sending}>{sending ? 'Sending…' : 'Send Review Request'}</button>
+      </form>
+      {err && <div className="login-error">{err}</div>}
+      {loading ? <div className="page-center"><div className="spinner" /></div> : <ReviewFunnelLog entries={entries} />}
+    </div>
+  );
+}
+
+// ─── Review Funnel (admin settings + metrics) ────────────────────────────────
+
+function AdminReviewFunnelPanel({ token, clientId, client, onClientUpdate }) {
+  const [enabled,  setEnabled]  = useState(!!client?.review_funnel_enabled);
+  const [link,     setLink]     = useState(client?.google_review_link || '');
+  const [saving,   setSaving]   = useState(false);
+  const [err,      setErr]      = useState('');
+  const [stats,    setStats]    = useState(null);
+  const [entries,  setEntries]  = useState([]);
+  const [loading,  setLoading]  = useState(false);
+
+  const authHeaders = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+
+  useEffect(() => {
+    setEnabled(!!client?.review_funnel_enabled);
+    setLink(client?.google_review_link || '');
+  }, [client?.id]);
+
+  useEffect(() => {
+    if (!client?.review_funnel_enabled || !clientId) { setStats(null); setEntries([]); return; }
+    setLoading(true);
+    fetch(`/api/dashboard/review-requests?adminClientId=${clientId}`, { headers: authHeaders })
+      .then(r => r.json())
+      .then(data => { setStats(data.stats); setEntries(data.entries ?? []); })
+      .finally(() => setLoading(false));
+  }, [client?.review_funnel_enabled, clientId, token]);
+
+  async function handleSave() {
+    setSaving(true);
+    setErr('');
+    try {
+      const r = await fetch('/api/dashboard/clients', {
+        method: 'PATCH', headers: authHeaders,
+        body: JSON.stringify({ client_id: clientId, review_funnel_enabled: enabled, google_review_link: link }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Save failed');
+      onClientUpdate?.(data.client);
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="review-funnel-card">
+      <div className="review-funnel-title">⭐ Review Funnel (admin)</div>
+      <div className="review-admin-row">
+        <label className="review-toggle">
+          <input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} />
+          <span>{enabled ? 'Enabled' : 'Disabled'}</span>
+        </label>
+        <input
+          className="review-link-input"
+          placeholder="Google review link"
+          value={link}
+          onChange={e => setLink(e.target.value)}
+        />
+        <button className="btn-secondary" onClick={handleSave} disabled={saving}>
+          {saving ? 'Saving…' : 'Save'}
+        </button>
+      </div>
+      {err && <div className="login-error">{err}</div>}
+
+      {client?.review_funnel_enabled && (
+        loading ? <div className="page-center"><div className="spinner" /></div> : stats && (
+          <>
+            <div className="review-stats-row">
+              <div className="review-stat"><div className="review-stat-val">{stats.sent}</div><div className="review-stat-label">Sent</div></div>
+              <div className="review-stat"><div className="review-stat-val">{stats.clicked}</div><div className="review-stat-label">Clicked</div></div>
+              <div className="review-stat"><div className="review-stat-val">{stats.avgRating ?? '—'}</div><div className="review-stat-label">Avg Rating</div></div>
+              <div className="review-stat"><div className="review-stat-val">{stats.rated}</div><div className="review-stat-label">Rated</div></div>
+            </div>
+            <ReviewFunnelLog entries={entries} />
+          </>
+        )
+      )}
+    </div>
+  );
+}
+
 // ─── Client Leads View (shared by clients + admin drill-in) ──────────────────
 
-function ClientLeadsView({ token, clientId, onBack }) {
+function ClientLeadsView({ token, clientId, onBack, isAdmin, client, onClientUpdate }) {
   const [entries,  setEntries]  = useState([]);
   const [stats,    setStats]    = useState({ totalThisMonth: 0, urgentPending: 0, scheduledMonth: 0 });
   const [filter,   setFilter]   = useState('all');
@@ -543,6 +716,11 @@ function ClientLeadsView({ token, clientId, onBack }) {
         <button className="btn-back" onClick={onBack}>← All Clients</button>
       )}
       {error && <div className="error-banner">⚠️ {error}</div>}
+
+      {isAdmin
+        ? <AdminReviewFunnelPanel token={token} clientId={clientId} client={client} onClientUpdate={onClientUpdate} />
+        : client?.review_funnel_enabled && <ReviewFunnelSection token={token} />}
+
       <StatsBar stats={stats} />
       <div className="toolbar">
         <div className="filter-group">
@@ -582,6 +760,8 @@ function Dashboard({ token, user, onLogout }) {
     else document.title = `${headerTitle} — Dashboard`;
   }, [headerTitle, isAdmin, selectedClient]);
 
+  const demoNum = !isAdmin ? fmtPhone(user?.demo_phone) : null;
+
   return (
     <div className="layout">
       <header className="topbar">
@@ -589,14 +769,16 @@ function Dashboard({ token, user, onLogout }) {
           <span className="logo">📞</span>
           <h1>{headerTitle}</h1>
           {isAdmin && !selectedClient && <span className="badge-admin">ADMIN</span>}
-          {!isAdmin && <span>Dashboard</span>}
         </div>
-        <button className="btn-logout" onClick={onLogout}>Sign out</button>
+        <div className="topbar-right">
+          {demoNum && (
+            <a href={`tel:${user.demo_phone}`} className="demo-pill">
+              📞 {demoNum}
+            </a>
+          )}
+          <button className="btn-logout" onClick={onLogout}>Sign out</button>
+        </div>
       </header>
-
-      {!isAdmin && (
-        <WelcomeBar businessName={user?.business_name} demoPhone={user?.demo_phone} />
-      )}
 
       {isAdmin && !selectedClient ? (
         <main className="main">
@@ -607,6 +789,9 @@ function Dashboard({ token, user, onLogout }) {
           token={token}
           clientId={isAdmin ? selectedClient?.id : null}
           onBack={isAdmin ? () => setSelectedClient(null) : null}
+          isAdmin={isAdmin}
+          client={isAdmin ? selectedClient : user}
+          onClientUpdate={isAdmin ? (patch => setSelectedClient(prev => ({ ...prev, ...patch }))) : null}
         />
       )}
     </div>
