@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import CuteReviewDashboard from './CuteReviewDashboard.jsx';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -88,6 +89,7 @@ function Login({ onLogin }) {
         business_name: data.business_name,
         demo_phone: data.demo_phone ?? null,
         review_funnel_enabled: data.review_funnel_enabled ?? false,
+        review_only_dashboard: data.review_only_dashboard ?? false,
       };
       sessionStorage.setItem(TOKEN_KEY, data.token);
       sessionStorage.setItem(USER_KEY, JSON.stringify(user));
@@ -815,5 +817,16 @@ export default function App() {
   }
 
   if (!token) return <Login onLogin={handleLogin} />;
+
+  if (user?.role === 'client' && user?.review_only_dashboard) {
+    return (
+      <CuteReviewDashboard
+        token={token}
+        businessName={user?.business_name}
+        onLogout={handleLogout}
+      />
+    );
+  }
+
   return <Dashboard token={token} user={user} onLogout={handleLogout} />;
 }

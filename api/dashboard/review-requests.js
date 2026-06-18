@@ -60,15 +60,17 @@ async function handlePost(req, res, payload) {
   }
 
   const { patient_name, patient_phone } = req.body ?? {};
-  if (!patient_name || !patient_phone) {
-    return res.status(400).json({ error: 'patient_name and patient_phone are required' });
+  if (!patient_phone) {
+    return res.status(400).json({ error: 'patient_phone is required' });
   }
+
+  const name = patient_name?.trim() || null;
 
   const { data: request, error } = await supabase
     .from('review_requests')
     .insert([{
       client_id:     payload.client_id,
-      patient_name:  patient_name.trim(),
+      patient_name:  name,
       patient_phone: patient_phone.trim(),
     }])
     .select()
@@ -79,10 +81,11 @@ async function handlePost(req, res, payload) {
     return res.status(500).json({ error: 'Database error' });
   }
 
-  const domain = process.env.VERCEL_DOMAIN;
-  const link   = `https://${domain}/review/${request.id}`;
+  const domain  = process.env.VERCEL_DOMAIN;
+  const link    = `https://${domain}/review/${request.id}`;
+  const greeting = name ? `Hi ${name}!` : 'Hi there!';
   const message =
-    `Hi ${patient_name}! Thank you for visiting ${payload.business_name} today. ` +
+    `${greeting} Thank you for visiting ${payload.business_name} today. ` +
     `We'd love your feedback — it only takes 30 seconds! ${link}`;
 
   try {
