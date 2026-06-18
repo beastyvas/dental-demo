@@ -60,15 +60,17 @@ async function handlePost(req, res, payload) {
   }
 
   const { patient_name, patient_phone } = req.body ?? {};
-  if (!patient_name || !patient_phone) {
-    return res.status(400).json({ error: 'patient_name and patient_phone are required' });
+  if (!patient_phone) {
+    return res.status(400).json({ error: 'patient_phone is required' });
   }
+
+  const name = patient_name?.trim() || null;
 
   const { data: request, error } = await supabase
     .from('review_requests')
     .insert([{
       client_id:     payload.client_id,
-      patient_name:  patient_name.trim(),
+      patient_name:  name,
       patient_phone: patient_phone.trim(),
     }])
     .select()
@@ -79,11 +81,21 @@ async function handlePost(req, res, payload) {
     return res.status(500).json({ error: 'Database error' });
   }
 
-  const domain = process.env.VERCEL_DOMAIN;
-  const link   = `https://${domain}/review/${request.id}`;
+  const { data: clientRow } = await supabase
+    .from('clients')
+    .select('review_provider_name')
+    .eq('id', payload.client_id)
+    .single();
+
+  const domain   = process.env.VERCEL_DOMAIN;
+  const link     = `https://${domain}/review/${request.id}`;
+  const greeting = name ? `Hi ${name}!` : 'Hi there!';
+  const shoutout = clientRow?.review_provider_name
+    ? ` If you could mention ${clientRow.review_provider_name} by name in your review, it'd mean so much to her!`
+    : '';
   const message =
-    `Hi ${patient_name}! Thank you for visiting ${payload.business_name} today. ` +
-    `We'd love your feedback — it only takes 30 seconds! ${link}`;
+    `${greeting} Thank you for visiting ${payload.business_name} today. ` +
+    `We'd love your feedback — it only takes 30 seconds!${shoutout} ${link}`;
 
   try {
     await sendSMS(patient_phone, message);
