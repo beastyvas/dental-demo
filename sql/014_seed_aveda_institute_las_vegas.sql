@@ -24,7 +24,7 @@ VALUES (
          -- Google Business Profile (Home -> "Get more reviews" -> Share),
          -- then: UPDATE clients SET google_review_link = '...'
          -- WHERE slug = 'aveda-institute-las-vegas';
-  'Ari'  -- review SMS asks clients to mention Ari by name — testimonials for her, not just the school
+  'Arianna Destiny'  -- review SMS asks clients to mention Arianna Destiny by name — testimonials for her, not just the school
 )
 ON CONFLICT (slug) DO UPDATE SET
   dashboard_password    = EXCLUDED.dashboard_password,
