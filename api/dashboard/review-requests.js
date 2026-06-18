@@ -81,11 +81,20 @@ async function handlePost(req, res, payload) {
     return res.status(500).json({ error: 'Database error' });
   }
 
-  const domain  = process.env.VERCEL_DOMAIN;
-  const link    = `https://${domain}/review/${request.id}`;
+  const { data: clientRow } = await supabase
+    .from('clients')
+    .select('review_provider_name')
+    .eq('id', payload.client_id)
+    .single();
+
+  const domain   = process.env.VERCEL_DOMAIN;
+  const link     = `https://${domain}/review/${request.id}`;
   const greeting = name ? `Hi ${name}!` : 'Hi there!';
+  const visited  = clientRow?.review_provider_name
+    ? `Thank you for visiting ${clientRow.review_provider_name} at ${payload.business_name} today.`
+    : `Thank you for visiting ${payload.business_name} today.`;
   const message =
-    `${greeting} Thank you for visiting ${payload.business_name} today. ` +
+    `${greeting} ${visited} ` +
     `We'd love your feedback — it only takes 30 seconds! ${link}`;
 
   try {
