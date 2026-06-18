@@ -90,12 +90,12 @@ async function handlePost(req, res, payload) {
   const domain   = process.env.VERCEL_DOMAIN;
   const link     = `https://${domain}/review/${request.id}`;
   const greeting = name ? `Hi ${name}!` : 'Hi there!';
-  const visited  = clientRow?.review_provider_name
-    ? `Thank you for visiting ${clientRow.review_provider_name} at ${payload.business_name} today.`
-    : `Thank you for visiting ${payload.business_name} today.`;
+  const shoutout = clientRow?.review_provider_name
+    ? ` If you could mention ${clientRow.review_provider_name} by name in your review, it'd mean so much to her!`
+    : '';
   const message =
-    `${greeting} ${visited} ` +
-    `We'd love your feedback — it only takes 30 seconds! ${link}`;
+    `${greeting} Thank you for visiting ${payload.business_name} today. ` +
+    `We'd love your feedback — it only takes 30 seconds!${shoutout} ${link}`;
 
   try {
     await sendSMS(patient_phone, message);
