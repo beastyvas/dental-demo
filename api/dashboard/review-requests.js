@@ -87,15 +87,15 @@ async function handlePost(req, res, payload) {
     .eq('id', payload.client_id)
     .single();
 
-  const domain   = process.env.VERCEL_DOMAIN;
-  const link     = `https://${domain}/review/${request.id}`;
+  // No link in the SMS for now — TextBelt requires a verified account to
+  // send URLs via text. Spell out the ask instead until that's sorted.
   const greeting = name ? `Hi ${name}!` : 'Hi there!';
   const shoutout = clientRow?.review_provider_name
     ? ` If you could mention ${clientRow.review_provider_name} by name in your review, it'd mean so much to her!`
     : '';
   const message =
     `${greeting} Thank you for visiting ${payload.business_name} today. ` +
-    `We'd love your feedback — it only takes 30 seconds!${shoutout} ${link}`;
+    `We'd love it if you could search "${payload.business_name}" on Google and leave us a review!${shoutout}`;
 
   try {
     await sendSMS(patient_phone, message);
