@@ -1,0 +1,40 @@
+{
+  "type": "function",
+  "function": {
+    "name": "bookAppointment",
+    "description": "Confirm and book the appointment after the caller has selected a slot from the availability results. Generates a confirmation number and logs the booking.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "customer_name": {
+          "type": "string",
+          "description": "Caller's full name"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Caller's callback phone number, including area code"
+        },
+        "service": {
+          "type": "string",
+          "description": "Treatment being booked, e.g. 'HydraFacial', 'Botox consultation'"
+        },
+        "slot_description": {
+          "type": "string",
+          "description": "Human-readable description of the chosen slot, e.g. 'Wednesday, May 28 at 2:00 PM'"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Email, new/returning status, how they heard about BHRC, and any other relevant details"
+        }
+      },
+      "required": ["customer_name", "phone", "service", "slot_description"]
+    }
+  },
+  "server": {
+    "url": "https://YOUR_VERCEL_DOMAIN.vercel.app/api/patientnow/book",
+    "timeoutSeconds": 20,
+    "headers": {
+      "x-vapi-secret": "{{VAPI_WEBHOOK_SECRET}}"
+    }
+  }
+}

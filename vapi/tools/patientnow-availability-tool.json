@@ -1,0 +1,28 @@
+{
+  "type": "function",
+  "function": {
+    "name": "checkAvailability",
+    "description": "Check available appointment slots at Beverly Hills Rejuvenation Center Henderson. Call this once you know the treatment requested and the caller's day/time preference.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "treatment": {
+          "type": "string",
+          "description": "Treatment the caller wants, e.g. 'HydraFacial', 'Botox consultation', 'Morpheus8'"
+        },
+        "date_preference": {
+          "type": "string",
+          "description": "Caller's preferred days and/or times, e.g. 'weekend afternoon' or 'Tuesday or Thursday morning'"
+        }
+      },
+      "required": ["treatment"]
+    }
+  },
+  "server": {
+    "url": "https://YOUR_VERCEL_DOMAIN.vercel.app/api/patientnow/availability",
+    "timeoutSeconds": 20,
+    "headers": {
+      "x-vapi-secret": "{{VAPI_WEBHOOK_SECRET}}"
+    }
+  }
+}
