@@ -178,6 +178,39 @@ input:focus { border-color: var(--accent); }
 
 .main { padding: 24px; flex: 1; }
 
+/* ── Assistant on/off toggle ── */
+.assistant-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 14px 18px;
+  margin-bottom: 16px;
+}
+.assistant-toggle-row.is-on  { background: var(--routine-dim); border-color: var(--routine); }
+.assistant-toggle-row.is-off { background: var(--urgent-dim);  border-color: var(--urgent); }
+.assistant-toggle-info { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.assistant-toggle-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+.is-on  .assistant-toggle-dot { background: var(--routine); box-shadow: 0 0 8px var(--routine); }
+.is-off .assistant-toggle-dot { background: var(--urgent);  box-shadow: 0 0 8px var(--urgent); }
+.assistant-toggle-label { font-size: 14px; font-weight: 600; }
+.is-on  .assistant-toggle-label { color: var(--routine); }
+.is-off .assistant-toggle-label { color: var(--urgent); }
+.assistant-toggle-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+.assistant-toggle-btn {
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 8px 16px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.assistant-toggle-btn:hover:not(:disabled) { border-color: var(--text-muted); }
+
 /* ── Stats bar ── */
 .stats-row {
   display: grid;

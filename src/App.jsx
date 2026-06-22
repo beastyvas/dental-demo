@@ -642,6 +642,60 @@ function AdminReviewFunnelPanel({ token, clientId, client, onClientUpdate }) {
   );
 }
 
+// ─── Assistant On/Off Toggle ─────────────────────────────────────────────────
+
+function AssistantToggle({ token, active, clientId, isAdmin, onChange }) {
+  const [busy, setBusy] = useState(false);
+  const [err,  setErr]  = useState('');
+
+  if (active === null) return null;
+
+  async function toggle() {
+    setBusy(true);
+    setErr('');
+    try {
+      const body = { assistant_active: !active };
+      if (isAdmin) body.client_id = clientId;
+      const r = await fetch('/api/dashboard/clients', {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Failed to update');
+      onChange(data.client.assistant_active);
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <div className={`assistant-toggle-row ${active ? 'is-on' : 'is-off'}`}>
+        <div className="assistant-toggle-info">
+          <span className="assistant-toggle-dot" />
+          <div>
+            <div className="assistant-toggle-label">
+              {active ? 'Receptionist is live' : 'Receptionist is paused'}
+            </div>
+            <div className="assistant-toggle-sub">
+              {active
+                ? 'Calls are being answered automatically.'
+                : 'Calls are being transferred to your front desk.'}
+            </div>
+          </div>
+        </div>
+        <button className="assistant-toggle-btn" onClick={toggle} disabled={busy}>
+          {busy ? '…' : active ? 'Turn off' : 'Turn on'}
+        </button>
+      </div>
+      {err && <div className="login-error">{err}</div>}
+    </>
+  );
+}
+
 // ─── Client Leads View (shared by clients + admin drill-in) ──────────────────
 
 function ClientLeadsView({ token, clientId, onBack, isAdmin, client, onClientUpdate }) {
@@ -651,6 +705,7 @@ function ClientLeadsView({ token, clientId, onBack, isAdmin, client, onClientUpd
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState('');
   const [updating, setUpdating] = useState(new Set());
+  const [assistantActive, setAssistantActive] = useState(null);
 
   const authHeaders = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
 
@@ -666,6 +721,7 @@ function ClientLeadsView({ token, clientId, onBack, isAdmin, client, onClientUpd
       const data = await r.json();
       setEntries(data.entries);
       setStats(data.stats);
+      setAssistantActive(data.assistant_active ?? null);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -718,6 +774,14 @@ function ClientLeadsView({ token, clientId, onBack, isAdmin, client, onClientUpd
         <button className="btn-back" onClick={onBack}>← All Clients</button>
       )}
       {error && <div className="error-banner">⚠️ {error}</div>}
+
+      <AssistantToggle
+        token={token}
+        active={assistantActive}
+        clientId={clientId}
+        isAdmin={isAdmin}
+        onChange={setAssistantActive}
+      />
 
       {isAdmin
         ? <AdminReviewFunnelPanel token={token} clientId={clientId} client={client} onClientUpdate={onClientUpdate} />

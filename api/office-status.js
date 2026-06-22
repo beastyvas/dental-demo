@@ -20,13 +20,14 @@ export default async function handler(req, res) {
     const client      = await getClientByAgentId(assistantId);
     const timezone    = client?.timezone ?? TIMEZONE;
 
-    const status     = getOfficeStatus(timezone);
-    const toolCallId = req.body?.message?.toolCalls?.[0]?.id ?? 'direct-call';
+    const status          = getOfficeStatus(timezone);
+    const assistantActive = client?.assistant_active !== false; // default true if client unresolved
+    const toolCallId      = req.body?.message?.toolCalls?.[0]?.id ?? 'direct-call';
 
     return res.status(200).json({
       results: [{
         toolCallId,
-        result: JSON.stringify(status),
+        result: JSON.stringify({ ...status, assistantActive }),
       }],
     });
   } catch (err) {

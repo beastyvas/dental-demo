@@ -79,6 +79,16 @@ async function handleGet(req, res, payload) {
     buildStatsQuery().eq('contacted', true).gte('created_at', monthAgo),
   ]);
 
+  let assistantActive = null;
+  if (clientId) {
+    const { data: clientRow } = await supabase
+      .from('clients')
+      .select('assistant_active')
+      .eq('id', clientId)
+      .single();
+    assistantActive = clientRow?.assistant_active ?? true;
+  }
+
   return res.status(200).json({
     entries,
     stats: {
@@ -86,6 +96,7 @@ async function handleGet(req, res, payload) {
       urgentPending:   urgentCount   ?? 0,
       scheduledMonth:  scheduledCount ?? 0,
     },
+    assistant_active: assistantActive,
   });
 }
 

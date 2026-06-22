@@ -2,7 +2,7 @@
   "type": "function",
   "function": {
     "name": "checkOfficeHours",
-    "description": "Checks whether the office is currently open or closed based on local time, and returns the current date and time. Call this at the very start of every call, before your greeting, so you know today's date and which mode to use.",
+    "description": "Checks whether the office is currently open or closed based on local time, and returns the current date and time, plus assistantActive (whether the business has the AI receptionist turned on). Call this at the very start of every call, before your greeting, so you know today's date, which mode to use, and whether you should even be handling this call.",
     "parameters": {
       "type": "object",
       "properties": {},

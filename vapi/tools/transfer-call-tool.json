@@ -1,0 +1,10 @@
+{
+  "type": "transferCall",
+  "destinations": [
+    {
+      "type": "number",
+      "number": "+1YOURFRONTDESKNUMBER",
+      "message": "Sure thing — one moment while I transfer you to our front desk."
+    }
+  ]
+}
