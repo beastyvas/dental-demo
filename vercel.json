@@ -2,12 +2,6 @@
   "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "crons": [
-    {
-      "path": "/api/cron/morning-summary",
-      "schedule": "0 15 * * 1-6"
-    }
-  ],
   "rewrites": [
     {
       "source": "/((?!api/).*)",
