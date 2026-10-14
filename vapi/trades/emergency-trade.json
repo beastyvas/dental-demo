@@ -1,0 +1,31 @@
+{
+  "trade_label": "plumbing and electrical",
+  "visit_type": "service call",
+  "visit_minutes": 60,
+  "services": [
+    "Leaks, clogs, water heaters, and burst pipes",
+    "Electrical repairs — outlets, breakers, panels, lighting, power outages",
+    "Fixture installs and upgrades",
+    "Free estimates on larger jobs (repipes, panel upgrades, remodel work)"
+  ],
+  "emergency_triggers": [
+    "A burst pipe, flooding, or water that won't shut off",
+    "Sewage backing up into the home",
+    "No hot water in freezing weather, or a leaking water heater",
+    "Sparking, burning smell, smoke from an outlet or panel, or a partial power outage with a burning smell",
+    "Gas smell"
+  ],
+  "safety_line": "   - Gas smell: get everyone out and call 911 or the gas company from outside. Flooding: shut the main water valve if they can. Sparking or burning smell: stay away from it, switch off that breaker only if it's safe, and call 911 if there's smoke or fire. Then continue.",
+  "triage_questions": [
+    "- What's happening — leak, clog, no hot water, no power, sparking?",
+    "- Is it happening right now and getting worse? (Urgent if yes.)",
+    "- Where in the home, and is water or power shut off at the moment?",
+    "- Is it a repair, or a bigger project they want quoted?"
+  ],
+  "faq": [
+    "- Service call fee: {{pricing_or_owner}}",
+    "- Do you do after-hours emergencies? Take their details and send the emergency alert — {{owner_name}} will call back about timing.",
+    "- Licensed and insured? Say {{owner_name}} will confirm on the callback."
+  ],
+  "callback_promise": "as soon as possible today, or first thing next business day"
+}

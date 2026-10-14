@@ -1,0 +1,3 @@
+# Real client configs hold phone numbers — keep them out of git.
+*.json
+!example.json

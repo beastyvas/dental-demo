@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import CuteReviewDashboard from './CuteReviewDashboard.jsx';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -787,6 +787,8 @@ function ClientLeadsView({ token, clientId, onBack, isAdmin, client, onClientUpd
         ? <AdminReviewFunnelPanel token={token} clientId={clientId} client={client} onClientUpdate={onClientUpdate} />
         : client?.review_funnel_enabled && <ReviewFunnelSection token={token} />}
 
+      <CallsSection token={token} clientId={clientId} />
+
       <StatsBar stats={stats} />
       <div className="toolbar">
         <div className="filter-group">
@@ -808,6 +810,129 @@ function ClientLeadsView({ token, clientId, onBack, isAdmin, client, onClientUpd
         <WaitlistTable entries={filtered} onScheduled={handleScheduled} onDelete={handleDelete} updating={updating} />
       )}
     </main>
+  );
+}
+
+// ─── Calls ───────────────────────────────────────────────────────────────────
+
+const OUTCOME_BADGE = {
+  booked:      { label: 'Booked',      cls: 'badge-booked' },
+  emergency:   { label: 'Urgent',      cls: 'badge-urgent' },
+  lead:        { label: 'Lead',        cls: 'badge-lead' },
+  transferred: { label: 'Transferred', cls: 'badge-lead' },
+  hangup:      { label: 'Hung up',     cls: 'badge-muted' },
+  error:       { label: 'Dropped',     cls: 'badge-urgent' },
+  info:        { label: 'Question',    cls: 'badge-muted' },
+  spam:        { label: 'Spam',        cls: 'badge-muted' },
+};
+
+function fmtDuration(sec) {
+  if (!sec) return '—';
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return m ? `${m}m ${String(s).padStart(2, '0')}s` : `${s}s`;
+}
+
+function CallsSection({ token, clientId }) {
+  const [calls,   setCalls]   = useState([]);
+  const [stats,   setStats]   = useState(null);
+  const [open,    setOpen]    = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [setupNeeded, setSetupNeeded] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const url = clientId ? `/api/dashboard/calls?adminClientId=${clientId}` : '/api/dashboard/calls';
+      const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      const data = r.ok ? await r.json() : { calls: [] };
+      setCalls(data.calls ?? []);
+      setStats(data.stats ?? null);
+      setSetupNeeded(!!data.setupNeeded);
+    } finally {
+      setLoading(false);
+    }
+  }, [token, clientId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (setupNeeded) return null;
+
+  return (
+    <section className="calls-section">
+      <div className="calls-header">
+        <h2>Calls</h2>
+        <button className="btn-secondary" onClick={load} disabled={loading}>↻ Refresh</button>
+      </div>
+
+      {stats && (
+        <div className="stats-row">
+          <div className="stat-card accent">
+            <div className="label">Calls Answered</div>
+            <div className="value">{stats.answered}</div>
+          </div>
+          <div className="stat-card">
+            <div className="label">After Hours</div>
+            <div className="value">{stats.afterHours}</div>
+          </div>
+          <div className="stat-card success">
+            <div className="label">Leads Captured</div>
+            <div className="value">{stats.leadsCaptured}</div>
+          </div>
+          <div className="stat-card">
+            <div className="label">Minutes Used</div>
+            <div className="value">
+              {stats.minutesUsed}{stats.includedMinutes ? <span className="value-sub"> / {stats.includedMinutes}</span> : null}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="page-center"><div className="spinner" /> Loading calls…</div>
+      ) : calls.length === 0 ? (
+        <div className="empty-state">No calls yet this month. They'll show up here a minute after each call ends.</div>
+      ) : (
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr><th>When</th><th>Caller</th><th>Result</th><th>What they needed</th><th>Length</th></tr>
+            </thead>
+            <tbody>
+              {calls.map(c => {
+                const badge = OUTCOME_BADGE[c.outcome] ?? { label: c.outcome ?? '—', cls: 'badge-muted' };
+                const isOpen = open === c.id;
+                return (
+                  <Fragment key={c.id}>
+                    <tr className="call-row" onClick={() => setOpen(isOpen ? null : c.id)}>
+                      <td>
+                        {c.started_at ? new Date(c.started_at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—'}
+                        {c.after_hours && <span className="tag-after-hours">after hours</span>}
+                      </td>
+                      <td>
+                        <div>{c.caller_name || 'Unknown caller'}</div>
+                        {c.caller_phone && <a href={`tel:${c.caller_phone}`} onClick={e => e.stopPropagation()} className="muted-link">{c.caller_phone}</a>}
+                      </td>
+                      <td><span className={`badge ${badge.cls}`}>{badge.label}</span>{c.text_back_sent && <span className="tag-after-hours">texted back</span>}</td>
+                      <td>{c.need || '—'}</td>
+                      <td>{fmtDuration(c.duration_seconds)}</td>
+                    </tr>
+                    {isOpen && (
+                      <tr className="call-detail">
+                        <td colSpan={5}>
+                          {c.summary && <p><strong>Summary:</strong> {c.summary}</p>}
+                          {c.recording_url && <audio controls preload="none" src={c.recording_url} />}
+                          {c.transcript && <pre className="transcript">{c.transcript}</pre>}
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }
 

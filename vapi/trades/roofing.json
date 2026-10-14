@@ -1,0 +1,30 @@
+{
+  "trade_label": "roofing",
+  "visit_type": "roof inspection",
+  "visit_minutes": 60,
+  "services": [
+    "Leak repair and emergency tarping",
+    "Storm, wind, and hail damage repair — help with insurance claims",
+    "Full roof replacement (free inspection and estimate)",
+    "Tile, shingle, and flat/foam roofs; roof maintenance and coatings"
+  ],
+  "emergency_triggers": [
+    "Water actively coming into the house — through the ceiling, around lights, down walls",
+    "A section of roof missing, collapsed, or open to the sky after a storm",
+    "A tree or debris through the roof",
+    "Ceiling sagging or bulging with water"
+  ],
+  "safety_line": "   - If a ceiling is sagging with water or there's water near electrical fixtures: tell them to keep everyone out of that room, put a bucket down, and switch off power to that area at the breaker if it's safe to do so. Then continue.",
+  "triage_questions": [
+    "- What are they seeing — an active leak, storm damage, missing tiles or shingles, or are they looking at a replacement?",
+    "- Is water coming in right now? (Urgent if yes.)",
+    "- What kind of roof — tile, shingle, flat/foam — and roughly how old, if they know?",
+    "- Is this going through insurance, or do they plan to pay directly? (Just note it — don't advise on claims.)"
+  ],
+  "faq": [
+    "- Inspections and estimates: free, unless {{owner_name}} has said otherwise — {{pricing_or_owner}}",
+    "- Do you work with insurance? Yes — {{owner_name}} can walk them through it at the inspection.",
+    "- How soon can you come out? Offer the earliest open time from checkAvailability."
+  ],
+  "callback_promise": "within one business day — sooner if it's leaking"
+}

@@ -43,7 +43,7 @@
     }
   },
   "server": {
-    "url": "https://YOUR_VERCEL_DOMAIN.vercel.app/api/calendar/book",
+    "url": "https://YOUR_VERCEL_DOMAIN.vercel.app/api/tools/calendar-book",
     "timeoutSeconds": 20,
     "headers": {
       "x-vapi-secret": "{{VAPI_WEBHOOK_SECRET}}"

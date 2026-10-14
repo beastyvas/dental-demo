@@ -4,7 +4,10 @@
  *
  * Usage:
  *   node scripts/vapi-sync.js massage-envy
- *   node scripts/vapi-sync.js hammond-dental    (coming soon)
+ *
+ * For NEW clients use scripts/onboard.js instead — it builds the assistant,
+ * phone number and database row from clients/<slug>.json. This script stays
+ * for the hand-built assistants registered below.
  *
  * Requires env vars (set in .env.local or via Vercel):
  *   VAPI_API_KEY          — your Vapi private key
@@ -51,7 +54,7 @@ const ASSISTANTS = {
   'massage-envy': {
     id:           '4235062a-715a-49fe-a72f-9ef83c915b35',
     promptFile:   'vapi/massage-envy-centennial-prompt.md',
-    firstMessage: 'Thank you for calling Massage Envy Centennial Gateway, this is Ava! Are you looking to book an appointment, or is there something else I can help you with today?',
+    firstMessage: 'Thank you for calling Massage Envy Centennial Gateway, this is Ava, an AI assistant — this call may be recorded. Are you looking to book an appointment, or is there something else I can help you with today?',
     tools: [
       'meevo-availability-tool',
       'meevo-book-tool',
@@ -62,7 +65,7 @@ const ASSISTANTS = {
   'maintenance-america': {
     id:           '2016b703-41c0-4b5d-8505-5bc5bcf17cf3',
     promptFile:   'vapi/prompts/maintenance-america-prompt.md',
-    firstMessage: 'Thank you for calling Maintenance America. This is Arianna, your scheduling assistant. How may I help you today?',
+    firstMessage: 'Thank you for calling Maintenance America. This is Arianna, an AI assistant — this call may be recorded. How may I help you today?',
     tools: [
       'office-status-tool',
       'calendar-book-tool',
@@ -73,7 +76,7 @@ const ASSISTANTS = {
   'demo': {
     id:           '73ce919c-a2f9-420e-bb7f-323a79fdac69',
     promptFile:   'vapi/prompts/demo-agent-prompt.md',
-    firstMessage: 'Hi there! Thanks for calling — for this demo, what type of business should I be the receptionist for today?',
+    firstMessage: 'Hi there! Thanks for calling — I\'m an AI assistant, and this call may be recorded. For this demo, what type of business should I be the receptionist for today?',
     tools: [
       'office-status-tool',
       'calendar-book-tool',
@@ -84,7 +87,7 @@ const ASSISTANTS = {
   'bhrc-henderson': {
     id:           'aeec7c93-00d7-4c4a-96fe-8568d92113ea',
     promptFile:   'vapi/prompts/bhrc-henderson-prompt.md',
-    firstMessage: 'Thank you for calling Beverly Hills Rejuvenation Center, this is Arianna. How can I help you today?',
+    firstMessage: 'Thank you for calling Beverly Hills Rejuvenation Center, this is Arianna, an AI assistant — this call may be recorded. How can I help you today?',
     tools: [
       'office-status-tool',
       'calendar-book-tool',
