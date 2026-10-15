@@ -1,0 +1,25 @@
+{
+  "slug": "desert-air-hvac",
+  "business_name": "Desert Air Heating & Cooling",
+  "trade": "hvac",
+  "agent_name": "Riley",
+  "owner_name": "Mike",
+  "owner_phone": "+17025550101",
+  "transfer_phone": "+17025550101",
+  "service_area": "Las Vegas, Henderson, and North Las Vegas",
+  "timezone": "America/Los_Angeles",
+  "business_hours": {
+    "mon": ["07:00", "17:00"], "tue": ["07:00", "17:00"], "wed": ["07:00", "17:00"],
+    "thu": ["07:00", "17:00"], "fri": ["07:00", "17:00"], "sat": ["08:00", "12:00"], "sun": null
+  },
+  "calendar_id": null,
+  "area_code": "702",
+  "twilio_number": null,
+  "plan": "answer_desk",
+  "included_minutes": 500,
+  "service_fee": "$89, waived if they go ahead with the repair",
+  "business_facts": ["Family-owned since 2011", "Licensed and insured (NV license #00000)"],
+  "extra_services": [],
+  "extra_faq": [],
+  "extra_rules": []
+}

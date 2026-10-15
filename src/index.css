@@ -968,3 +968,27 @@ td { padding: 12px 16px; vertical-align: middle; }
 @media (max-width: 480px) {
   .cute-stats-row { flex-wrap: wrap; }
 }
+
+/* ── Calls ─────────────────────────────────────────────────────────────── */
+.calls-section { margin-bottom: 32px; }
+.calls-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.calls-header h2 { font-size: 16px; font-weight: 600; }
+.stat-card .value-sub { font-size: 14px; font-weight: 500; color: var(--text-muted); }
+.badge-booked { background: var(--routine-dim); color: var(--routine); }
+.badge-lead   { background: var(--accent-dim);  color: var(--accent); }
+.badge-muted  { background: var(--surface-2);   color: var(--text-muted); }
+.call-row { cursor: pointer; }
+.call-row:hover td { background: var(--surface-2); }
+.call-detail td { background: var(--surface); padding: 14px 16px; }
+.call-detail p { margin-bottom: 10px; line-height: 1.6; }
+.call-detail audio { width: 100%; max-width: 420px; margin-bottom: 10px; }
+.transcript {
+  white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px; color: var(--text-muted); max-height: 280px; overflow: auto;
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px;
+}
+.tag-after-hours {
+  display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 10px;
+  font-size: 11px; color: var(--text-muted); border: 1px solid var(--border);
+}
+.muted-link { font-size: 12px; color: var(--text-muted); }

@@ -3,6 +3,13 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
+    { "source": "/api/emergency",        "destination": "/api/tools/emergency" },
+    { "source": "/api/office-status",    "destination": "/api/tools/office-status" },
+    { "source": "/api/waitlist",         "destination": "/api/tools/waitlist" },
+    { "source": "/api/calendar/book",    "destination": "/api/tools/calendar-book" },
+    { "source": "/api/calendar/availability", "destination": "/api/tools/calendar-availability" },
+    { "source": "/api/meevo/:action",      "destination": "/api/tools/meevo?action=:action" },
+    { "source": "/api/patientnow/:action", "destination": "/api/tools/patientnow?action=:action" },
     {
       "source": "/((?!api/).*)",
       "destination": "/index.html"

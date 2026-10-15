@@ -10,7 +10,7 @@
     }
   },
   "server": {
-    "url": "https://YOUR_VERCEL_DOMAIN.vercel.app/api/office-status",
+    "url": "https://YOUR_VERCEL_DOMAIN.vercel.app/api/tools/office-status",
     "timeoutSeconds": 10
   }
 }

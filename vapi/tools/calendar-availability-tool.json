@@ -1,0 +1,28 @@
+{
+  "type": "function",
+  "function": {
+    "name": "checkAvailability",
+    "description": "Returns the open appointment times for a given date, based on the business's calendar and hours. Call this before offering times, and again if the caller asks about a different day. Only offer times this returns.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "date": {
+          "type": "string",
+          "description": "The date to check, in YYYY-MM-DD format. Work it out from today's date (from checkOfficeHours) when the caller says things like 'tomorrow' or 'Thursday'."
+        },
+        "duration_minutes": {
+          "type": "number",
+          "description": "How long the visit takes, in minutes. Defaults to 60."
+        }
+      },
+      "required": ["date"]
+    }
+  },
+  "server": {
+    "url": "https://YOUR_VERCEL_DOMAIN.vercel.app/api/tools/calendar-availability",
+    "timeoutSeconds": 15,
+    "headers": {
+      "x-vapi-secret": "{{VAPI_WEBHOOK_SECRET}}"
+    }
+  }
+}

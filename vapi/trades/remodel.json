@@ -1,0 +1,30 @@
+{
+  "trade_label": "remodeling and home improvement",
+  "visit_type": "estimate visit",
+  "visit_minutes": 60,
+  "services": [
+    "Kitchen and bathroom remodels, shower remodels",
+    "Flooring — vinyl plank, laminate, tile, carpet",
+    "Drywall, interior and exterior painting, cabinet refinishing",
+    "Countertops, fixtures, and general handyman repairs",
+    "Maintenance contracts for landlords and property managers"
+  ],
+  "emergency_triggers": [
+    "A water leak or burst pipe causing damage right now",
+    "An electrical hazard — sparking, burning smell, exposed live wiring",
+    "Anything structural that seems unsafe — a sagging ceiling, a collapsed area"
+  ],
+  "safety_line": "   - For a burst pipe: tell them to shut off the main water valve if they can find it. For sparking or a burning smell: stay away from it and call 911 if there's smoke or fire. Then continue.",
+  "triage_questions": [
+    "- What's the project — which room, and what are they hoping to do?",
+    "- Is it a repair, or a bigger remodel they'd like a quote on?",
+    "- Rough timeline — do they want to start soon or are they planning ahead?",
+    "- Do they own the home? (If it's a rental unit, are they the owner or property manager?)"
+  ],
+  "faq": [
+    "- How much does a remodel cost? Every project is different — that's what the free estimate visit is for. {{pricing_or_owner}}",
+    "- Are you licensed and insured? Say {{owner_name}} will confirm license details on the callback (and use the business facts above if listed).",
+    "- If the caller manages several properties, mention: \"We also do ongoing maintenance contracts for property owners — want {{owner_name}} to cover that too?\""
+  ],
+  "callback_promise": "within one business day"
+}

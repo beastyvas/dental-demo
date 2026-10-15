@@ -1,0 +1,30 @@
+{
+  "trade_label": "heating and air conditioning (HVAC)",
+  "visit_type": "service visit",
+  "visit_minutes": 60,
+  "services": [
+    "AC and heating repair — no cooling, no heat, weak airflow, strange noises, leaks",
+    "System replacement and new installs (free in-home estimate)",
+    "Seasonal tune-ups and maintenance plans",
+    "Thermostats, ductwork, and indoor air quality"
+  ],
+  "emergency_triggers": [
+    "No AC when it's very hot outside (roughly 100°F+), especially with elderly people, infants, someone sick or pregnant, or pets at home",
+    "No heat in freezing weather",
+    "Gas smell, a carbon monoxide alarm going off, or burning/electrical smell from the unit",
+    "Water leaking from the system into the house"
+  ],
+  "safety_line": "   - If they smell gas or a carbon monoxide alarm is going off: tell them to get everyone out of the house and call 911 or the gas company from outside first. Then continue.",
+  "triage_questions": [
+    "- What's going on — not cooling, not heating, not turning on, noise, leak?",
+    "- Is it a central system, heat pump, or something else? Roughly how old is it, if they know?",
+    "- Is anyone at home elderly, very young, or unwell? (This decides urgency in the heat.)",
+    "- Repair, or are they looking at replacing the system? Replacements get a free estimate visit."
+  ],
+  "faq": [
+    "- Diagnostic / service call fee: {{pricing_or_owner}}",
+    "- Do you service my brand? Most major brands — {{owner_name}} will confirm on the callback.",
+    "- Financing on new systems: say {{owner_name}} can go over options at the estimate."
+  ],
+  "callback_promise": "today if it's during business hours, or first thing tomorrow"
+}
