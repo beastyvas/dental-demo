@@ -66,7 +66,10 @@ function RatingPage({ requestId, info, onSubmitted }) {
   );
 }
 
-// ─── Page 2 — Private Feedback ───────────────────────────────────────────────
+// ─── Page 2 — Google + optional private note ─────────────────────────────────
+// Every rating gets the same Google link. Showing it only to 5★ customers is
+// review gating, which Google's policy and the FTC review rule prohibit. The
+// private note is an extra way to reach the business, never a replacement.
 
 function FeedbackPage({ requestId, info }) {
   const [name,     setName]     = useState(info.patient_name || '');
@@ -107,8 +110,14 @@ function FeedbackPage({ requestId, info }) {
   return (
     <div className="login-card review-card">
       <div className="logo">💬</div>
-      <h1>We're sorry to hear that</h1>
-      <p>Help {info.business_name || 'us'} improve</p>
+      <h1>Thanks for the honest rating</h1>
+      <p>We'd value a public review on Google — good or bad.</p>
+      {info.google_review_link && (
+        <a className="btn-primary review-google-btn" href={info.google_review_link}>
+          Leave a Google review
+        </a>
+      )}
+      <p className="review-or">You can also tell {info.business_name || 'us'} directly what we could do better:</p>
       <form onSubmit={handleSubmit}>
         <input
           placeholder="Your name"
