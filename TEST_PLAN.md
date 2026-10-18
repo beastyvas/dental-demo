@@ -193,8 +193,8 @@ Log in with the password onboarding printed.
 - [ ] **Switch ON**, then call again. The AI answers.
   - If the switch shows an error ("Couldn't reach the phone system"), screenshot it and tell me. Vapi may need a different "detach" call.
 - [ ] Review request from this client: the text contains a link to `/review/…`.
-  - 5 stars goes to Google.
-  - 1–3 stars goes to the private feedback form.
+  - 5 stars goes straight to Google.
+  - 1–4 stars still shows the **"Leave a Google review"** button, with the optional private note below it. Every rating must see the Google link (no review gating).
 
 ---
 
