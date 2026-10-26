@@ -45,8 +45,8 @@ Use a second phone (not the owner's cell) for every test call.
 **Homepage `/`**
 - [ ] The Packages section shows 3 cards:
   - Answer Desk: **$497/mo + $500 setup**
-  - Booked Jobs: **$997/mo + $1,000**, marked "Most popular"
-  - Full Office: **$1,497/mo + $2,500**, marked "Limited to 3 clients"
+  - Booked Jobs: **$997/mo + $1,000**, no badge
+  - Full Office: **$1,497/mo + $2,500**, marked "Recommended", with no client limit
 - [ ] Each card has a Guarantee block.
 - [ ] The Founding Crew banner shows under the cards. Its button jumps to the callback form.
 - [ ] The Services tabs say "Included in …". No old prices ($99, $500, $100/mo) anywhere.
