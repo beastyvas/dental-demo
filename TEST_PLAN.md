@@ -46,7 +46,7 @@ Use a second phone (not the owner's cell) for every test call.
 - [ ] The Packages section shows 3 cards:
   - Answer Desk: **$497/mo + $500 setup**
   - Booked Jobs: **$997/mo + $1,000**, marked "Most popular"
-  - Full Office: **$1,497/mo + $1,000**, marked "Limited to 3 clients"
+  - Full Office: **$1,497/mo + $2,500**, marked "Limited to 3 clients"
 - [ ] Each card has a Guarantee block.
 - [ ] The Founding Crew banner shows under the cards. Its button jumps to the callback form.
 - [ ] The Services tabs say "Included in …". No old prices ($99, $500, $100/mo) anywhere.
@@ -61,7 +61,7 @@ Use a second phone (not the owner's cell) for every test call.
 
 **Demo page `/demo` (check on your phone)**
 - [ ] The hero box reads "$0 · until it delivers". There's no $99.
-- [ ] The Terms block shows Founding Crew, $0 up front and the 3 tier prices.
+- [ ] The Terms block shows Founding Crew (setup waived, rate locked 12 months) and the 3 tier prices.
 - [ ] The FAQ has 6 questions with the new pricing.
 - [ ] The "Leave your number" form submits and lands in the CRM as "Free missed-lead audit".
 
@@ -87,8 +87,8 @@ Use a second phone (not the owner's cell) for every test call.
 - [ ] Click "Closed the Deal". Three tier buttons appear, the recommended one is preselected, and the monthly field is filled in.
 - [ ] Pick Booked Jobs, tick Founding Crew, then ✓. In Pipeline/Edit the lead shows:
   - deal value **3000**
-  - recommended offer "Booked Jobs System (Founding Crew)"
-  - setup "$1,000 deferred — Founding Crew"
+  - recommended offer "Booked Jobs (Founding Crew)"
+  - setup "Waived — Founding Crew (rate locked 12 mo)", and Analytics "Setup signed" does not go up
 - [ ] Analytics: "New MRR This Month" rises by 997. "Setup signed" shows $1k. The target matches your MRR goal (not $10k).
 - [ ] Undo the test lead afterwards so it doesn't count toward your MRR.
 
