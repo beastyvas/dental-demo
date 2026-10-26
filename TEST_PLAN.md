@@ -40,18 +40,18 @@ Use a second phone (not the owner's cell) for every test call.
 
 ---
 
-## 1. CRM public site (nickbuilds.com)
+## 1. CRM public site (nickbuilds.org)
 
 **Homepage `/`**
 - [ ] The Packages section shows 3 cards:
-  - Answer Desk: **$497/mo + $1,500 setup**
-  - Booked Jobs System: **$797/mo + $3,000**, marked "Most popular"
-  - Full Office: **$1,197/mo + $5,000**, marked "Limited to 3 clients"
+  - Answer Desk: **$497/mo + $500 setup**
+  - Booked Jobs: **$997/mo + $1,000**, marked "Most popular"
+  - Full Office: **$1,497/mo + $1,000**, marked "Limited to 3 clients"
 - [ ] Each card has a Guarantee block.
 - [ ] The Founding Crew banner shows under the cards. Its button jumps to the callback form.
 - [ ] The Services tabs say "Included in …". No old prices ($99, $500, $100/mo) anywhere.
 - [ ] FAQ: pricing, guarantee, Founding Crew, Jobber question, AI disclosure. Nothing about "win-back".
-- [ ] The calculator uses $797.
+- [ ] The calculator uses $997.
 
 **Callback form**
 - [ ] The dropdown starts with "Free missed-lead audit". The consent checkbox is **unchecked** by default.
@@ -73,7 +73,7 @@ Use a second phone (not the owner's cell) for every test call.
 ## 2. CRM dashboard (`/dashboard`)
 
 **Dialer**
-- [ ] A lead shows the green "Pitch the … — $3k + $797/mo" box with the guarantee line. "Upsell to Full Office" works.
+- [ ] A lead shows the green "Pitch the … — $1k + $997/mo" box with the guarantee line. "Upsell to Full Office" works.
 - [ ] Call Script → **Opener** tab ends with the 🔎 missed-lead audit tip.
 - [ ] **Close** tab: the close quotes the tier price plus guarantee. Below it is the Founding Crew close.
 - [ ] **Objections** tab includes:
@@ -88,14 +88,14 @@ Use a second phone (not the owner's cell) for every test call.
 - [ ] Pick Booked Jobs, tick Founding Crew, then ✓. In Pipeline/Edit the lead shows:
   - deal value **3000**
   - recommended offer "Booked Jobs System (Founding Crew)"
-  - setup "$3,000 deferred — Founding Crew"
-- [ ] Analytics: "New MRR This Month" rises by 797. "Setup signed" shows $3k. The target matches your MRR goal (not $10k).
+  - setup "$1,000 deferred — Founding Crew"
+- [ ] Analytics: "New MRR This Month" rises by 997. "Setup signed" shows $1k. The target matches your MRR goal (not $10k).
 - [ ] Undo the test lead afterwards so it doesn't count toward your MRR.
 
 **Elsewhere**
 - [ ] The Offers Playbook shows 3 tiers with setup, guarantee and "Say it like this", plus the Founding Crew card.
-- [ ] The "By Pain Point" tab shows each pain as "Booked Jobs System · $3k + $797/mo" (or its tier).
-- [ ] Pipeline: an expanded lead shows "Recommend: … — $3k + $797/mo" plus the guarantee.
+- [ ] The "By Pain Point" tab shows each pain as "Booked Jobs · $1k + $997/mo" (or its tier).
+- [ ] Pipeline: an expanded lead shows "Recommend: … — $1k + $997/mo" plus the guarantee.
 - [ ] Find tab: a new scrape saves leads with the tier pitch, not "$500/mo".
 - [ ] Demo recap AI: schedule a demo, generate a recap. It names a tier, price and guarantee.
 
