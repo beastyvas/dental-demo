@@ -16,6 +16,7 @@ import { toE164, prettyPhone }    from '../../lib/phone.js';
 import { isValidTwilioSignature } from '../../lib/twilio.js';
 import { optKeyword }             from '../../lib/optout.js';
 import { cancelPending } from '../../lib/followups.js';
+import { createLead } from '../../lib/leads.js';
 
 const EMPTY_TWIML = '<?xml version="1.0" encoding="UTF-8"?><Response></Response>';
 
@@ -67,6 +68,16 @@ async function handleSms(params) {
     const stopped = await cancelPending({ clientId, phone: from, kinds: ['estimate', 'reactivation'] }).catch(() => 0);
     await supabase.from('client_leads').update({ status: 'replied', updated_at: new Date().toISOString() })
       .eq('client_id', clientId).eq('phone', from).in('status', ['new', 'contacted', 'estimate_sent']);
+    // A past customer answering a reactivation text is a new lead.
+    const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
+    const [{ data: reactivated }, { data: known }] = await Promise.all([
+      supabase.from('followups').select('id').eq('client_id', clientId).eq('to_phone', from)
+        .eq('kind', 'reactivation').eq('status', 'sent').gte('sent_at', since).limit(1),
+      supabase.from('client_leads').select('id').eq('client_id', clientId).eq('phone', from).limit(1),
+    ]);
+    if (reactivated?.length && !known?.length) {
+      await createLead(client, { source: 'reactivation', phone: from, message: body, status: 'replied' }).catch(() => null);
+    }
     await sendSMS(ownerPhone, `💬 Text from ${prettyPhone(from)} to ${client.business_name}:\n"${body.slice(0, 500)}"\nReply to them directly at ${prettyPhone(from)}.${stopped ? ' (Follow-up texts stopped.)' : ''}`,
       { client, kind: 'reply', skipOptOutCheck: true });
   }
