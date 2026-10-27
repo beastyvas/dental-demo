@@ -7,9 +7,12 @@
     { "path": "/api/cron/scorecard", "schedule": "0 16 1 * *" }
   ],
   "functions": {
-    "api/admin/[action].js": { "maxDuration": 60, "includeFiles": "vapi/**" }
+    "api/admin/[action].js": { "maxDuration": 60, "includeFiles": "vapi/**" },
+    "api/site.js": { "includeFiles": "vapi/trades/**" }
   },
   "rewrites": [
+    { "source": "/s/:slug",              "destination": "/api/site?slug=:slug" },
+    { "source": "/s/:slug/:area",        "destination": "/api/site?slug=:slug&area=:area" },
     { "source": "/api/emergency",        "destination": "/api/tools/emergency" },
     { "source": "/api/office-status",    "destination": "/api/tools/office-status" },
     { "source": "/api/waitlist",         "destination": "/api/tools/waitlist" },
