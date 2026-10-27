@@ -22,7 +22,7 @@ Object.assign(process.env, {
   VERCEL_TOKEN: 'vt', VERCEL_PROJECT_ID: 'prj_1', VERCEL_TEAM_ID: 'team_1',
 });
 
-const { siteModel, renderSitePage, renderSitemap, renderRobots } = await import('../lib/site.js');
+const { siteModel, renderSitePage, renderSitemap, renderRobots, DIRECTIONS } = await import('../lib/site.js');
 const { default: site } = await import('../api/site.js');
 const { default: admin } = await import('../lib/handlers/admin.js');
 const { default: middleware } = await import('../middleware.js');
@@ -40,37 +40,86 @@ beforeEach(() => {
   vercelCalls.length = 0;
 });
 
-test('defaults come from the trade template and service area', () => {
+test('defaults come from the trade template and service area — nothing invented', () => {
   const m = siteModel(CLIENT);
   assert.deepEqual(m.areas, ['Henderson', 'Las Vegas', 'North Las Vegas']);
   assert.equal(m.services[0].name, 'AC and heating repair');
   assert.equal(m.schemaType, 'HVACBusiness');
-  assert.match(m.headline, /^Heating & Air in Henderson/);
-  assert.equal(m.published, false);
+  assert.equal(m.headline, 'Heating & Air for Henderson');
+  assert.equal(m.tagline, 'Calls answered day and night.');
+  assert.equal(m.direction, 'jobsite');
+  assert.deepEqual([m.license, m.rating, m.reviews.length, m.insured], [null, null, 0, false]);
 });
 
-test('pages are escaped, wired to the lead form, noindexed until published', () => {
+test('pages are escaped, wired to the lead form, noindexed with a readiness note until published', () => {
   const html = renderSitePage(CLIENT, { base: 'https://rx.example/s/desert-air', formAction: '/api/leads/form?key=kkk' });
   assert.ok(html.includes('Desert Air &lt;HVAC&gt;'));
   assert.ok(!html.includes('<HVAC>'));
   assert.match(html, /<form method="POST" action="\/api\/leads\/form\?key=kkk">/);
-  assert.match(html, /name="_redirect" value="https:\/\/rx.example\/s\/desert-air\?thanks=1"/);
+  assert.match(html, /name="_redirect" value="https:\/\/rx.example\/s\/desert-air\?thanks=1#book"/);
   assert.match(html, /<meta name="robots" content="noindex">/);
+  assert.match(html, /Still needed: contractor license number \(Nevada law/);
   assert.match(html, /href="https:\/\/rx.example\/s\/desert-air\/north-las-vegas"/);
   assert.match(html, /"@type":"HVACBusiness"/);
-  const pub = renderSitePage({ ...CLIENT, site: { published: true } }, { base: 'https://x.com', formAction: '#', area: 'Henderson', thanks: true });
-  assert.ok(!pub.includes('noindex'));
-  assert.match(pub, /<h1>Heating &amp; Air in Henderson<\/h1>/);
-  assert.match(pub, /Thanks — we got it/);
+  assert.match(html, /<nav class="bar"[^>]*><a class="call" href="tel:\+17025559999">Call \(702\) 555-9999<\/a><a class="est" href="#book">Free estimate<\/a>/);
   assert.match(renderSitemap(CLIENT, 'https://x.com'), /<loc>https:\/\/x.com\/las-vegas<\/loc>/);
   assert.match(renderRobots('https://x.com', false), /Disallow: \//);
+});
+
+const FULL = {
+  ...CLIENT,
+  site: {
+    published: true, license: 'NV Lic. #0071234', license_limit: '$500,000', insured: true, rating: 4.9, review_count: 128,
+    reviews: [{ name: 'Maria G.', text: 'Texted back in a minute.' }], reviews_url: 'https://g.page/r/abc',
+    projects: [{ before: 'https://img.example/b1.jpg', after: 'https://img.example/a1.jpg', caption: 'Tile re-lay, Henderson' }],
+    booking_url: 'https://cal.com/desert-air/estimate', color: '#0E4D64',
+  },
+};
+
+test('license shows in the header and footer, rating/booking/before-after render from real data', () => {
+  const html = renderSitePage(FULL, { base: 'https://desertair.com', formAction: '/f', area: 'Henderson', thanks: true });
+  assert.ok(!html.includes('noindex'));
+  assert.ok(!html.includes('Preview, not public yet'));
+  assert.match(html, /<h1>Heating &amp; Air in Henderson<\/h1>/);
+  assert.match(html, /class="lic">NV Lic. #0071234</);
+  assert.match(html, /<p>NV Lic. #0071234, monetary limit \$500,000<\/p>/);
+  assert.match(html, /4\.9 stars from 128 Google reviews/);
+  assert.match(html, /<iframe class="embed" src="https:\/\/cal.com\/desert-air\/estimate"/);
+  assert.match(html, /class="ba-before" src="https:\/\/img.example\/b1.jpg"/);
+  assert.match(html, /aria-label="Drag to compare before and after, project 1"/);
+  assert.match(html, /"aggregateRating"/);
+  assert.match(html, /Got it, thanks/);
+  // Only known schedulers get embedded.
+  const evil = renderSitePage({ ...FULL, site: { ...FULL.site, booking_url: 'https://evil.example/x' } }, { base: 'https://x', formAction: '/f' });
+  assert.ok(!evil.includes('<iframe'));
+});
+
+test('ban list: no AI-default looks in any direction (docs/site-playbook.md)', () => {
+  for (const direction of Object.keys(DIRECTIONS)) {
+    const html = renderSitePage({ ...FULL, site: { ...FULL.site, direction } }, { base: 'https://x.com', formAction: '/f' });
+    const css = html.match(/<style>([\s\S]*?)<\/style>/)[1];
+    for (const font of ['Inter', 'Roboto', 'Arial', 'Open Sans', 'Lato', 'Space Grotesk', 'system-ui', '-apple-system', 'Segoe UI']) {
+      assert.ok(!html.includes(font), `${direction}: banned font ${font}`);
+    }
+    assert.ok(!/gradient\(/.test(css), `${direction}: gradient`);
+    assert.ok(!/border-radius:\s*(999|[3-9]\d)px|border-radius:\s*50%/.test(css), `${direction}: pill/round shapes`);
+    assert.ok(!/text-transform:\s*uppercase/.test(css), `${direction}: all-caps labels`);
+    assert.ok(!/monospace/.test(css), `${direction}: monospace`);
+    assert.ok(!/font-style:\s*italic|<em>|<i>/.test(html), `${direction}: italic accents`);
+    assert.ok(!/[·→]/.test(html.replace(/<script[\s\S]*?<\/script>/g, '')), `${direction}: middle dots or arrows`);
+    assert.ok(!/\b0[1-9]\b\s*[\/<]/.test(html), `${direction}: 01/02 markers`);
+    const text = html.replace(/<(script|style)[\s\S]*?<\/\1>/g, ' ').replace(/<[^>]+>/g, ' ');
+    assert.ok(!/\b(Submit|elevate|seamless|trusted partner|solutions)\b/i.test(text), `${direction}: cliché copy`);
+    assert.ok(!/@keyframes|transition:|:hover\s*\{[^}]*transform/.test(css), `${direction}: decorative motion`);
+    assert.ok(!/#F4F1EA|#D97757/i.test(html), `${direction}: cream / Claude terracotta`);
+  }
 });
 
 test('served by slug (preview) and by custom domain; unknown area 404s', async () => {
   let r = res();
   await site({ query: { slug: 'desert-air' } }, r);
   assert.equal(r.statusCode, 200);
-  assert.match(r.body, /<title>Desert Air &lt;HVAC&gt; — Heating &amp; Air in Henderson<\/title>/);
+  assert.match(r.body, /<title>Desert Air &lt;HVAC&gt; \| Heating &amp; Air in Henderson<\/title>/);
   r = res();
   await site({ query: { slug: 'desert-air', area: 'mars' } }, r);
   assert.equal(r.statusCode, 404);
