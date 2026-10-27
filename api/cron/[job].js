@@ -6,11 +6,13 @@
 import morningSummary from '../../lib/handlers/cron/morning-summary.js';
 import followups      from '../../lib/handlers/cron/followups.js';
 import scorecard      from '../../lib/handlers/cron/scorecard.js';
+import a2p            from '../../lib/handlers/cron/a2p.js';
 
 const JOBS = {
   'morning-summary': morningSummary,
   'followups':       followups,
   'scorecard':       scorecard,
+  'a2p':             a2p,
 };
 
 export default async function handler(req, res) {

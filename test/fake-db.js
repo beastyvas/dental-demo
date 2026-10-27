@@ -51,7 +51,7 @@ export function createFakeDb(seed = {}) {
       gte(k, v) { st.filters.push((r) => r[k] >= v); return b; },
       lte(k, v) { st.filters.push((r) => r[k] <= v); return b; },
       neq(k, v) { st.filters.push((r) => r[k] !== v); return b; },
-      in(k, vs) { st.filters.push((r) => vs.includes(r[k])); return b; },
+      in(k, vs) { st.filters.push((r) => vs.includes(get(r, k))); return b; },
       order() { return b; },
       limit(n) { st.limit = n; return b; },
       single() { st.single = 'single'; return b; },
