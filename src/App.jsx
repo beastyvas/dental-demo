@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, Fragment } from 'react';
 import CuteReviewDashboard from './CuteReviewDashboard.jsx';
 import LeadsInbox from './LeadsInbox.jsx';
+import Scorecard from './Scorecard.jsx';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -788,6 +789,7 @@ function ClientLeadsView({ token, clientId, onBack, isAdmin, client, onClientUpd
         ? <AdminReviewFunnelPanel token={token} clientId={clientId} client={client} onClientUpdate={onClientUpdate} />
         : client?.review_funnel_enabled && <ReviewFunnelSection token={token} />}
 
+      <Scorecard token={token} clientId={clientId} />
       <LeadsInbox token={token} clientId={clientId} />
       <CallsSection token={token} clientId={clientId} />
 

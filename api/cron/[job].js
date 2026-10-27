@@ -5,10 +5,12 @@
 
 import morningSummary from '../../lib/handlers/cron/morning-summary.js';
 import followups      from '../../lib/handlers/cron/followups.js';
+import scorecard      from '../../lib/handlers/cron/scorecard.js';
 
 const JOBS = {
   'morning-summary': morningSummary,
   'followups':       followups,
+  'scorecard':       scorecard,
 };
 
 export default async function handler(req, res) {

@@ -3,7 +3,8 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "crons": [
-    { "path": "/api/cron/followups", "schedule": "*/5 * * * *" }
+    { "path": "/api/cron/followups", "schedule": "*/5 * * * *" },
+    { "path": "/api/cron/scorecard", "schedule": "0 16 1 * *" }
   ],
   "functions": {
     "api/admin/[action].js": { "maxDuration": 60, "includeFiles": "vapi/**" }
