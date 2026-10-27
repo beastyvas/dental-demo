@@ -2,6 +2,9 @@
   "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "functions": {
+    "api/admin/[action].js": { "maxDuration": 60, "includeFiles": "vapi/**" }
+  },
   "rewrites": [
     { "source": "/api/emergency",        "destination": "/api/tools/emergency" },
     { "source": "/api/office-status",    "destination": "/api/tools/office-status" },
