@@ -1,0 +1,8 @@
+name = "lead-email-worker"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+
+[vars]
+# Set to your receptionist deployment, e.g. https://receptionist.example.com/api/leads/email
+LEAD_WEBHOOK_URL = "https://YOUR_RECEPTIONIST_DOMAIN/api/leads/email"
+# LEAD_EMAIL_SECRET is a secret: `npx wrangler secret put LEAD_EMAIL_SECRET`

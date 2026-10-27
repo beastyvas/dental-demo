@@ -18,7 +18,9 @@ import { getClientByAgentId }  from '../../lib/clients.js';
 import { sendSMS, isOptedOut } from '../../lib/sms.js';
 import { toE164 }              from '../../lib/phone.js';
 import { isOpenAt }            from '../../lib/businessHours.js';
+import { createLead }          from '../../lib/leads.js';
 import {
+  LEAD_OUTCOMES,
   classifyCall, toolNamesFromArtifact, shouldTextBack, shouldNotifyOwner,
   ownerSummaryText, textBackText,
 } from '../../lib/calls.js';
@@ -92,6 +94,19 @@ export async function handleEndOfCall(msg) {
 
   const callRowId = row?.id ?? null;
   const result = { outcome, textedBack: false, ownerNotified: false };
+
+  // 0. Into the lead inbox — the AI already answered, so it counts as responded.
+  if (client && callerPhone && LEAD_OUTCOMES.has(outcome)) {
+    await safely('lead inbox', () => createLead(client, {
+      source: 'call',
+      name: callerName,
+      phone: callerPhone,
+      message: structured.need || msg.analysis?.summary || null,
+      status: outcome === 'booked' ? 'booked' : 'contacted',
+      first_response_at: startedAt ?? new Date().toISOString(),
+      vapi_call_id: callId,
+    }));
+  }
 
   // 1. Missed-call text-back to the caller
   if (client && callerPhone && (outcome === 'hangup' || outcome === 'error')) {

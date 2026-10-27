@@ -7,12 +7,14 @@ import clients        from '../../lib/handlers/dashboard/clients.js';
 import waitlist       from '../../lib/handlers/dashboard/waitlist.js';
 import reviewRequests from '../../lib/handlers/dashboard/review-requests.js';
 import calls          from '../../lib/handlers/dashboard/calls.js';
+import leads          from '../../lib/handlers/dashboard/leads.js';
 
 const RESOURCES = {
   'clients':         clients,
   'waitlist':        waitlist,
   'review-requests': reviewRequests,
   'calls':           calls,
+  'leads':           leads,
 };
 
 export default async function handler(req, res) {
