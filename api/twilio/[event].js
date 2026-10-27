@@ -15,6 +15,7 @@ import { sendSMS }                from '../../lib/sms.js';
 import { toE164, prettyPhone }    from '../../lib/phone.js';
 import { isValidTwilioSignature } from '../../lib/twilio.js';
 import { optKeyword }             from '../../lib/optout.js';
+import { cancelPending } from '../../lib/followups.js';
 
 const EMPTY_TWIML = '<?xml version="1.0" encoding="UTF-8"?><Response></Response>';
 
@@ -50,6 +51,7 @@ async function handleSms(params) {
   const kw = optKeyword(body);
   if (kw === 'stop') {
     await supabase.from('opt_outs').upsert([{ client_id: clientId, phone: from }], { onConflict: 'client_id,phone' });
+    if (clientId) await cancelPending({ clientId, phone: from });
     return;
   }
   if (kw === 'start') {
@@ -61,7 +63,11 @@ async function handleSms(params) {
 
   const ownerPhone = client?.owner_phone ?? client?.doctor_phone;
   if (ownerPhone && from !== toE164(ownerPhone)) {
-    await sendSMS(ownerPhone, `💬 Text from ${prettyPhone(from)} to ${client.business_name}:\n"${body.slice(0, 500)}"\nReply to them directly at ${prettyPhone(from)}.`,
+    // A reply means a person is talking now — stop the automated nudges.
+    const stopped = await cancelPending({ clientId, phone: from, kinds: ['estimate', 'reactivation'] }).catch(() => 0);
+    await supabase.from('client_leads').update({ status: 'replied', updated_at: new Date().toISOString() })
+      .eq('client_id', clientId).eq('phone', from).in('status', ['new', 'contacted', 'estimate_sent']);
+    await sendSMS(ownerPhone, `💬 Text from ${prettyPhone(from)} to ${client.business_name}:\n"${body.slice(0, 500)}"\nReply to them directly at ${prettyPhone(from)}.${stopped ? ' (Follow-up texts stopped.)' : ''}`,
       { client, kind: 'reply', skipOptOutCheck: true });
   }
 }

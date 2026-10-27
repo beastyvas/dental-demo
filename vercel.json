@@ -2,6 +2,9 @@
   "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "crons": [
+    { "path": "/api/cron/followups", "schedule": "*/5 * * * *" }
+  ],
   "functions": {
     "api/admin/[action].js": { "maxDuration": 60, "includeFiles": "vapi/**" }
   },

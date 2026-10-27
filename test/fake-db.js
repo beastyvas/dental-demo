@@ -1,6 +1,6 @@
 /**
  * In-memory stand-in for the supabase-js query builder — just enough of the
- * chain (select/insert/upsert/update/delete + eq/is/gte/limit/order + single/
+ * chain (select/insert/upsert/update/delete + eq/is/gte/lte/neq/in/limit/order + single/
  * maybeSingle) for the handler tests. Await any chain to run it.
  */
 import crypto from 'node:crypto';
@@ -39,13 +39,16 @@ export function createFakeDb(seed = {}) {
     };
     const b = {
       select() { return b; },
-      insert(rows) { st.op = 'insert'; st.rows = rows; return b; },
+      insert(rows) { st.op = 'insert'; st.rows = [].concat(rows); return b; },
       upsert(rows, opts = {}) { st.op = 'upsert'; st.rows = rows; st.opts = opts; return b; },
       update(vals) { st.op = 'update'; st.rows = vals; return b; },
       delete() { st.op = 'delete'; return b; },
       eq(k, v) { st.filters.push((r) => r[k] === v); return b; },
       is(k, v) { st.filters.push((r) => (r[k] ?? null) === v); return b; },
       gte(k, v) { st.filters.push((r) => r[k] >= v); return b; },
+      lte(k, v) { st.filters.push((r) => r[k] <= v); return b; },
+      neq(k, v) { st.filters.push((r) => r[k] !== v); return b; },
+      in(k, vs) { st.filters.push((r) => vs.includes(r[k])); return b; },
       order() { return b; },
       limit(n) { st.limit = n; return b; },
       single() { st.single = 'single'; return b; },
