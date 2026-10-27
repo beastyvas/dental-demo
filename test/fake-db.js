@@ -9,6 +9,9 @@ export function createFakeDb(seed = {}) {
   const tables = structuredClone(seed);
   const t = (name) => (tables[name] ??= []);
 
+  // "integrations->jobber->>account_id" style JSON paths, like PostgREST.
+  const get = (r, k) => k.split(/->>?/).reduce((v, p) => (v == null ? v : v[p]), r);
+
   function builder(table) {
     const st = { op: 'select', filters: [], rows: null, limit: null, single: null, opts: {} };
     const match = (r) => st.filters.every((f) => f(r));
@@ -43,7 +46,7 @@ export function createFakeDb(seed = {}) {
       upsert(rows, opts = {}) { st.op = 'upsert'; st.rows = rows; st.opts = opts; return b; },
       update(vals) { st.op = 'update'; st.rows = vals; return b; },
       delete() { st.op = 'delete'; return b; },
-      eq(k, v) { st.filters.push((r) => r[k] === v); return b; },
+      eq(k, v) { st.filters.push((r) => get(r, k) === v); return b; },
       is(k, v) { st.filters.push((r) => (r[k] ?? null) === v); return b; },
       gte(k, v) { st.filters.push((r) => r[k] >= v); return b; },
       lte(k, v) { st.filters.push((r) => r[k] <= v); return b; },
