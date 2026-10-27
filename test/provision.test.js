@@ -180,3 +180,14 @@ test('admin send-credentials before provisioning is a 400', async () => {
   await admin(adminReq('send-credentials', { client_id: 'c_new' }), r);
   assert.equal(r.statusCode, 400);
 });
+
+test('admin text-owner works before provisioning (owner cell from config)', async () => {
+  let r = res();
+  await admin(adminReq('text-owner', { client_id: 'c_new', body: 'Your order form: https://form.typeform.com/to/x' }), r);
+  assert.equal(r.statusCode, 200, JSON.stringify(r.body));
+  assert.equal(r.body.to, '+17025550101');
+  assert.equal(db.tables.messages[0].from_number, '+17025550000');
+  r = res();
+  await admin(adminReq('text-owner', { client_id: 'c_new', body: '' }), r);
+  assert.equal(r.statusCode, 400);
+});
